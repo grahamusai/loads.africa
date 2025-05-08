@@ -233,7 +233,7 @@ export default function DriversPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold md:text-3xl">Driver Management</h1>
           <Link href="/dashboard/drivers/new">
-            <Button>
+            <Button className="cursor-pointer" >
               <Plus className="mr-2 h-4 w-4" />
               Add Driver
             </Button>

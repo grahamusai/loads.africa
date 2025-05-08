@@ -7,6 +7,7 @@ import { useForm, Control } from "react-hook-form"
 import { z } from "zod"
 import { format } from "date-fns"
 import { CalendarIcon, ChevronRight, Loader2, MapPin, Package, DollarSign, Info } from "lucide-react"
+import pb from "@/lib/pocketbase"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -57,26 +58,30 @@ const formSchema = z.object({
   deliveryTime: z.string({ required_error: "Delivery time is required" }),
 
   // Step 2: Load Details
-  cargoType: z.string().min(2, { message: "Cargo type is required" }),
+  cargo_description: z.string().min(2, { message: "Cargo description is required" }),
   isHazardous: z.boolean().default(false),
+  isExpedited: z.boolean().default(false),
   weight: z.string().min(1, { message: "Weight is required" }),
   length: z.string().optional(),
   width: z.string().optional(),
   height: z.string().optional(),
-  equipmentType: z.string({ required_error: "Equipment type is required" }),
-
+  equipment_type: z.string({ required_error: "Equipment type is required" }),
+  pieceCount: z.string().optional(),
+  packagingType: z.string().optional(),
+  temperatureMin: z.string().optional(),
+  temperatureMax: z.string().optional(),
+  
   // Step 3: Rate and Requirements
-  rateType: z.enum(["fixed", "per_mile", "negotiable"]),
-  rateAmount: z.string().min(1, { message: "Rate amount is required" }),
+  currency: z.string().default("USD"),
+  km: z.string().optional(),
   specialRequirements: z.string().optional(),
   accessorialServices: z.string().optional(),
 
   // Step 4: Company Information
   companyName: z.string().min(2, { message: "Company name is required" }),
-  contactName: z.string().min(2, { message: "Contact name is required" }),
-  contactPhone: z.string().min(10, { message: "Valid phone number is required" }),
-  contactEmail: z.string().email({ message: "Valid email is required" }),
-  referenceNumber: z.string().optional(),
+  reference_number: z.string().optional(),
+  status: z.enum(["draft", "active", "completed", "cancelled"]).default("draft"),
+  visibility: z.enum(["public", "private"]).default("public"),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -85,6 +90,7 @@ export default function NewLoadPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
 
   // Initialize form with default values
   const form = useForm<FormValues>({
@@ -96,22 +102,26 @@ export default function NewLoadPage() {
       destinationAddress: "",
       pickupTime: "",
       deliveryTime: "",
-      cargoType: "",
+      cargo_description: "",
       isHazardous: false,
+      isExpedited: false,
       weight: "",
       length: "",
       width: "",
       height: "",
-      equipmentType: "",
-      rateType: "fixed",
-      rateAmount: "",
+      equipment_type: "",
+      pieceCount: "",
+      packagingType: "",
+      temperatureMin: "",
+      temperatureMax: "",
+      currency: "USD",
+      km: "",
       specialRequirements: "",
       accessorialServices: "",
       companyName: "",
-      contactName: "",
-      contactPhone: "",
-      contactEmail: "",
-      referenceNumber: "",
+      reference_number: "",
+      status: "draft",
+      visibility: "public",
     },
   })
 
@@ -120,23 +130,54 @@ export default function NewLoadPage() {
 
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
-      // In a real application, you would send this data to your API
-      console.log("Form submitted:", data)
+      // Format the data according to PocketBase schema
+      const formattedData = {
+        reference_number: data.reference_number || generateReferenceNumber(),
+        posted_by: pb.authStore.model?.id, // Current user ID
+        company: pb.authStore.model?.company, // User's company ID
+        equipment_type: data.equipment_type,
+        status: "draft",
+        visibility: data.visibility,
+        currency: data.currency || "USD",
+        km: data.km ? parseFloat(data.km) : null,
+        isHazardous: data.isHazardous || false,
+        isExpedited: data.isExpedited || false,
+        assignedTo: null, // Will be set when a carrier accepts the load
+        assignedAt: null, // Will be set when a carrier accepts the load
+        completedAt: null, // Will be set when the load is completed
+        cargo_description: data.cargo_description,
+        weight: data.weight ? parseFloat(data.weight) : null,
+        length: data.length ? parseFloat(data.length) : null,
+        width: data.width ? parseFloat(data.width) : null,
+        height: data.height ? parseFloat(data.height) : null,
+        pieceCount: data.pieceCount ? parseInt(data.pieceCount) : null,
+        packagingType: data.packagingType || null,
+        specialRequirements: data.specialRequirements || null,
+        accessorialServices: data.accessorialServices || null,
+        temperatureMin: data.temperatureMin ? parseFloat(data.temperatureMin) : null,
+        temperatureMax: data.temperatureMax ? parseFloat(data.temperatureMax) : null,
+      };
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
+      // Create the record in PocketBase
+      await pb.collection('loads').create(formattedData);
+      
       // Redirect to loads page after successful submission
-      router.push("/dashboard/loads?success=true")
+      router.push("/dashboard/loads?success=true");
     } catch (error) {
-      console.error("Error submitting form:", error)
+      console.error("Error submitting form:", error);
+      setFormError("Failed to create load. Please try again.");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
+
+  // Helper function to generate a reference number
+  const generateReferenceNumber = () => {
+    return `LD-${Date.now().toString().slice(-6)}`;
+  };
 
   // Navigate to next step
   const nextStep = async () => {
@@ -157,13 +198,14 @@ export default function NewLoadPage() {
         ]
         break
       case 2:
-        fieldsToValidate = ["cargoType", "weight", "equipmentType"]
+        fieldsToValidate = [
+          "cargo_description", 
+          "weight", 
+          "equipment_type",
+        ]
         break
       case 3:
-        fieldsToValidate = ["rateType", "rateAmount"]
-        break
-      case 4:
-        fieldsToValidate = ["companyName", "contactName", "contactPhone", "contactEmail"]
+        fieldsToValidate = ["companyName"]
         break
     }
 
@@ -431,10 +473,10 @@ export default function NewLoadPage() {
                     <div className="grid gap-4 md:grid-cols-2">
                       <FormField
                         control={form.control as unknown as Control<FormValues>}
-                        name="cargoType"
+                        name="cargo_description"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Cargo Type</FormLabel>
+                            <FormLabel>Cargo Description</FormLabel>
                             <FormControl>
                               <Input placeholder="e.g. Packaged goods, Pallets, etc." {...field} />
                             </FormControl>
@@ -526,7 +568,7 @@ export default function NewLoadPage() {
 
                     <FormField
                       control={form.control as unknown as Control<FormValues>}
-                      name="equipmentType"
+                      name="equipment_type"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Equipment Type</FormLabel>
@@ -560,14 +602,12 @@ export default function NewLoadPage() {
                 </Card>
               )}
 
-              
-
               {/* Step 4: Company Information */}
               {step === 3 && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Company Information</CardTitle>
-                    <CardDescription>Provide contact details for this load</CardDescription>
+                    <CardDescription>Provide company details for this load</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="grid gap-4 md:grid-cols-2">
@@ -587,7 +627,7 @@ export default function NewLoadPage() {
 
                       <FormField
                         control={form.control as unknown as Control<FormValues>}
-                        name="referenceNumber"
+                        name="reference_number"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Reference Number (Optional)</FormLabel>
@@ -600,45 +640,26 @@ export default function NewLoadPage() {
                       />
                     </div>
 
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <FormField
-                        control={form.control as unknown as Control<FormValues>}
-                        name="contactName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Contact Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Full name" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control as unknown as Control<FormValues>}
-                        name="contactPhone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Contact Phone</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Phone number" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
                     <FormField
                       control={form.control as unknown as Control<FormValues>}
-                      name="contactEmail"
+                      name="visibility"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Contact Email</FormLabel>
-                          <FormControl>
-                            <Input type="email" placeholder="Email address" {...field} />
-                          </FormControl>
+                          <FormLabel>Visibility</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select visibility" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="public">Public</SelectItem>
+                              <SelectItem value="private">Private</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Public loads are visible to all carriers, private loads are only visible to invited carriers
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -712,8 +733,8 @@ export default function NewLoadPage() {
 
                       <div className="grid gap-4 md:grid-cols-2">
                         <div>
-                          <p className="text-sm font-medium text-muted-foreground">Cargo Type</p>
-                          <p>{formValues.cargoType || "Not specified"}</p>
+                          <p className="text-sm font-medium text-muted-foreground">Cargo Description</p>
+                          <p>{formValues.cargo_description || "Not specified"}</p>
                         </div>
 
                         <div>
@@ -738,40 +759,14 @@ export default function NewLoadPage() {
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Equipment Type</p>
                           <p>
-                            {equipmentTypes.find((type) => type.value === formValues.equipmentType)?.label ||
+                            {equipmentTypes.find((type) => type.value === formValues.equipment_type)?.label ||
                               "Not specified"}
                           </p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="rounded-lg border p-4">
-                      <div className="mb-4 flex items-center gap-2">
-                        <DollarSign className="h-5 w-5 text-muted-foreground" />
-                        <h3 className="text-lg font-medium">Rate and Requirements</h3>
-                      </div>
-
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Rate</p>
-                          <p className="text-lg font-bold text-green-600">
-                            ${formValues.rateAmount || "0"}
-                            {formValues.rateType === "per_mile" ? "/mile" : ""}
-                            {formValues.rateType === "negotiable" ? " (Negotiable)" : ""}
-                          </p>
-                        </div>
- 
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Special Requirements</p>
-                          <p>{formValues.specialRequirements || "None"}</p>
-                        </div>
-
-                        <div className="md:col-span-2">
-                          <p className="text-sm font-medium text-muted-foreground">Accessorial Services</p>
-                          <p>{formValues.accessorialServices || "None"}</p>
-                        </div>
-                      </div>
-                    </div>
+                   
 
                     <div className="rounded-lg border p-4">
                       <div className="mb-4 flex items-center gap-2">
@@ -787,14 +782,12 @@ export default function NewLoadPage() {
 
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Reference Number</p>
-                          <p>{formValues.referenceNumber || "None"}</p>
+                          <p>{formValues.reference_number || "None"}</p>
                         </div>
 
                         <div>
-                          <p className="text-sm font-medium text-muted-foreground">Contact</p>
-                          <p>{formValues.contactName || "Not specified"}</p>
-                          <p className="text-sm">{formValues.contactPhone || "No phone"}</p>
-                          <p className="text-sm">{formValues.contactEmail || "No email"}</p>
+                          <p className="text-sm font-medium text-muted-foreground">Visibility</p>
+                          <p>{formValues.visibility === "public" ? "Public" : "Private"}</p>
                         </div>
                       </div>
                     </div>
