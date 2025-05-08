@@ -72,7 +72,6 @@ const formSchema = z.object({
   temperatureMax: z.string().optional(),
   
   // Step 3: Rate and Requirements
-  currency: z.string().default("USD"),
   km: z.string().optional(),
   specialRequirements: z.string().optional(),
   accessorialServices: z.string().optional(),
@@ -83,6 +82,15 @@ const formSchema = z.object({
   status: z.enum(["draft", "active", "completed", "cancelled"]).default("draft"),
   visibility: z.enum(["public", "private"]).default("public"),
 })
+
+
+// Check is user is authenicated
+if (!pb.authStore.isValid) {
+  console.log("User is not authenticated");
+  // Optionally redirect to login or show an error
+} else {
+  console.log("User is authenticated", pb.authStore.model?.id);
+}
 
 type FormValues = z.infer<typeof formSchema>
 
@@ -114,7 +122,6 @@ export default function NewLoadPage() {
       packagingType: "",
       temperatureMin: "",
       temperatureMax: "",
-      currency: "USD",
       km: "",
       specialRequirements: "",
       accessorialServices: "",
@@ -136,17 +143,20 @@ export default function NewLoadPage() {
       // Format the data according to PocketBase schema
       const formattedData = {
         reference_number: data.reference_number || generateReferenceNumber(),
-        posted_by: pb.authStore.model?.id, // Current user ID
-        company: pb.authStore.model?.company, // User's company ID
+        origin: data.origin,
+        origin_address: data.originAddress,
+        destination: data.destination,
+        destination_address: data.destinationAddress,
+        pickup_date: data.pickupDate.toISOString(),
+        pickup_time: data.pickupTime,
+        delivery_date: data.deliveryDate.toISOString(),
+        delivery_time: data.deliveryTime,
         equipment_type: data.equipment_type,
         status: "draft",
         visibility: data.visibility,
-        currency: data.currency || "USD",
         km: data.km ? parseFloat(data.km) : null,
         isHazardous: data.isHazardous || false,
         isExpedited: data.isExpedited || false,
-        assignedTo: null, // Will be set when a carrier accepts the load
-        assignedAt: null, // Will be set when a carrier accepts the load
         completedAt: null, // Will be set when the load is completed
         cargo_description: data.cargo_description,
         weight: data.weight ? parseFloat(data.weight) : null,
@@ -159,6 +169,7 @@ export default function NewLoadPage() {
         accessorialServices: data.accessorialServices || null,
         temperatureMin: data.temperatureMin ? parseFloat(data.temperatureMin) : null,
         temperatureMax: data.temperatureMax ? parseFloat(data.temperatureMax) : null,
+        company_name: data.companyName,
       };
 
       // Create the record in PocketBase
