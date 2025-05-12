@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { format } from "date-fns"
 import { CalendarIcon, Loader2, TruckIcon, FileText, Gauge, PenToolIcon as Tool } from "lucide-react"
+import pb from "@/lib/pocketbase"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -145,16 +146,23 @@ export default function NewTruckPage() {
     setIsSubmitting(true)
 
     try {
-      // In a real application, you would send this data to your API
-      console.log("Form submitted:", data)
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      // Create the truck record in PocketBase
+      await pb.collection('trucks').create({
+        ...data,
+        // Convert date objects to ISO strings for PocketBase
+        registrationExpiry: data.registrationExpiry?.toISOString(),
+        insuranceExpiry: data.insuranceExpiry?.toISOString(),
+        annualInspectionDate: data.annualInspectionDate?.toISOString(),
+        lastMaintenanceDate: data.lastMaintenanceDate?.toISOString(),
+        nextMaintenanceDate: data.nextMaintenanceDate?.toISOString(),
+        purchaseDate: data.purchaseDate?.toISOString(),
+      });
 
       // Redirect to trucks page after successful submission
       router.push("/dashboard/trucks?success=true")
     } catch (error) {
       console.error("Error submitting form:", error)
+      // You might want to show an error message to the user here
     } finally {
       setIsSubmitting(false)
     }

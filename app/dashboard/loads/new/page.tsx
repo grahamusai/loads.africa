@@ -72,7 +72,7 @@ const formSchema = z.object({
   temperatureMax: z.string().optional(),
   
   // Step 3: Rate and Requirements
-  km: z.string().optional(),
+  distance: z.string().optional(),
   specialRequirements: z.string().optional(),
   accessorialServices: z.string().optional(),
 
@@ -122,7 +122,7 @@ export default function NewLoadPage() {
       packagingType: "",
       temperatureMin: "",
       temperatureMax: "",
-      km: "",
+      distance: "",
       specialRequirements: "",
       accessorialServices: "",
       companyName: "",
@@ -154,7 +154,7 @@ export default function NewLoadPage() {
         equipment_type: data.equipment_type,
         status: "draft",
         visibility: data.visibility,
-        km: data.km ? parseFloat(data.km) : null,
+        distance: data.distance ? parseFloat(data.distance) : null,
         isHazardous: data.isHazardous || false,
         isExpedited: data.isExpedited || false,
         completedAt: null, // Will be set when the load is completed
