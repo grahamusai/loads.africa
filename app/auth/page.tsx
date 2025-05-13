@@ -14,10 +14,27 @@ import pb from "@/lib/pocketbase"
 
 export default function AuthPage() {
   const router = useRouter()
+  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
+  const userType = searchParams.get('type')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+
+  const getDashboardPath = (type: string) => {
+    switch (type) {
+      case 'carrier':
+        return '/carrier-dashboard'
+      case 'goods':
+        return '/dashboard'
+      case 'agent':
+        return '/clearing-agents'
+      case 'truck-owner':
+        return '/truck-owner'
+      default:
+        return '/login'
+    }
+  }
 
   // Login form state
   const [loginData, setLoginData] = useState({
@@ -35,23 +52,32 @@ export default function AuthPage() {
     confirmPassword: "",
     terms: false
   })
-
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault()
     setError("")
     setLoading(true)
 
     try {
-      await pb.collection("users").authWithPassword(loginData.email, loginData.password)
+      const authData = await pb.collection("users").authWithPassword(loginData.email, loginData.password)
+      
+      // Check if user type matches the requested dashboard type
+      if (!userType) {
+        throw new Error("Invalid login attempt. Please select a dashboard type.")
+      }
+
+      if (authData.record.user_type !== userType) {
+        throw new Error(`You don't have access to this dashboard. Please login to the ${authData.record.user_type} dashboard.`)
+      }
+
       if (loginData.remember) {
-        // Set longer session duration with correct parameter order (token, model)
         pb.authStore.save(pb.authStore.token, pb.authStore.model)
       }
-      router.push("/dashboard")
+      
+      router.push(getDashboardPath(userType))
     } catch (err: any) {
       setError(err.message || "Failed to login")
     } finally {
-      setLoading(false)
+      setLoading(false) 
     }
   }
 
@@ -66,12 +92,17 @@ export default function AuthPage() {
       return
     }
 
-    try {
+    try {      if (!userType) {
+        throw new Error("Invalid signup attempt. Please select a dashboard type.")
+      }
+
       await pb.collection("users").create({
         email: signupData.email,
         password: signupData.password,
         passwordConfirm: signupData.confirmPassword,
-        name: `${signupData.firstName} ${signupData.lastName}`,
+        first_name: signupData.firstName,
+        last_name: signupData.lastName,
+        user_type: userType,
       })
       
       // Login after successful signup

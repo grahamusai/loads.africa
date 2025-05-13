@@ -62,7 +62,7 @@ const Header = () => {
       variants={fadeIn}
       className="text-4xl md:text-6xl font-bold mb-6 text-white"
     >
-      Revolutionize Your <span className="text-yellow-500">Trucking</span> Business
+      Revolutionize Your <span className="text-teal-500">Trucking</span> Business
     </motion.h1>
     
     <motion.p 
@@ -76,7 +76,7 @@ const Header = () => {
       variants={fadeIn}
       className="flex flex-col sm:flex-row justify-center gap-4"
     >
-      <Button className="bg-yellow-500 text-black hover:bg-yellow-600 text-lg px-8 py-6">
+      <Button className="bg-teal-500 text-black hover:bg-teal-600 text-lg px-8 py-6">
         Start Free Trial
       </Button>
       <Button variant="outline" className="border-white hover:bg-white/10 text-lg px-8 py-6">
@@ -92,7 +92,7 @@ const Header = () => {
   transition={{ delay: 1.5, duration: 1 }}
   className="absolute bottom-10 left-1/2 transform -translate-x-1/2"
 >
-  <Link href="#features" className="flex flex-col items-center text-gray-400 hover:text-yellow-500 transition-colors">
+  <Link href="#features" className="flex flex-col items-center text-gray-400 hover:text-teal-500 transition-colors">
     <span className="text-sm mb-2">Learn More</span>
     <ChevronRight className="h-6 w-6 rotate-90" />
   </Link>

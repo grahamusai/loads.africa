@@ -11,7 +11,7 @@ export default function Sidebar() {
   return (
     <aside className="w-64 bg-sidebar border-r border-sidebar-border">
       <div className="p-6">
-        <h1 className="text-xl font-bold text-[#074d41]">Loads Africa</h1>
+        <h1 className="text-xl font-bold text-[#008080]">Loads Africa</h1>
       </div>
       
       <nav className="px-3 py-2">
@@ -21,12 +21,12 @@ export default function Sidebar() {
             variant="ghost"
             className={cn(
               "w-full justify-start font-semibold text-lg ",
-              pathname === "/dashboard"
-                ? "bg-[#074d41] text-white hover:bg-[#074d41] hover:text-white font-semibold"
+              pathname === "/carrier-dashboard"
+                ? "bg-[#008080] text-white hover:bg-[#008080] hover:text-white font-semibold"
                 : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >
-            <Link href="/dashboard">
+            <Link href="/carrier-dashboard">
               <Home className="mr-2" />
               Dashboard
             </Link>
@@ -37,29 +37,57 @@ export default function Sidebar() {
             variant="ghost"
             className={cn(
               "w-full justify-start font-semibold text-lg ",
-              pathname === "/dashboard/loads"
-                ? "bg-[#074d41] text-white hover:bg-[#074d41] hover:text-white font-semibold"
+              pathname === "/carrier-dashboard/loads"
+                ? "bg-[#008080] text-white hover:bg-[#008080] hover:text-white font-semibold"
                 : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >
-            <Link href="/dashboard/loads">
+            <Link href="/carrier-dashboard/loads">
               <PackageOpen className="mr-2" />
               Loads
             </Link>
           </Button>
-         
-          
           <Button
             asChild
             variant="ghost"
             className={cn(
               "w-full justify-start font-semibold text-lg ",
-              pathname === "/dashboard/tracking"
-                ? "bg-[#074d41] text-white hover:bg-[#074d41] hover:text-white font-semibold"
+              pathname === "/carrier-dashboard/trucks"
+                ? "bg-[#008080] text-white hover:bg-[#008080] hover:text-white font-semibold"
                 : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >
-            <Link href="/dashboard/tracking">
+            <Link href="/carrier-dashboard/trucks">
+              <Truck className="mr-2" />
+              My Trucks
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant="ghost"
+            className={cn(
+              "w-full justify-start font-semibold text-lg ",
+              pathname === "/carrier-dashboard/drivers"
+                ? "bg-[#008080] text-white hover:bg-[#008080] hover:text-white font-semibold"
+                : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            )}
+          >
+            <Link href="/carrier-dashboard/drivers">
+              <Users className="mr-2" />
+              My Drivers
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant="ghost"
+            className={cn(
+              "w-full justify-start font-semibold text-lg ",
+              pathname === "/carrier-dashboard/tracking"
+                ? "bg-[#008080] text-white hover:bg-[#008080] hover:text-white font-semibold"
+                : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            )}
+          >
+            <Link href="/carrier-dashboard/tracking">
               <MapPin className="mr-2" />
               Tracking
             </Link>
@@ -70,12 +98,12 @@ export default function Sidebar() {
             variant="ghost"
             className={cn(
               "w-full justify-start font-semibold text-lg ",
-              pathname === "/dashboard/settings"
-                ? "bg-[#074d41] text-white hover:bg-[#074d41] hover:text-white font-semibold"
+              pathname === "/carrier-dashboard/settings"
+                ? "bg-[#008080] text-white hover:bg-[#008080] hover:text-white font-semibold"
                 : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >
-            <Link href="/dashboard/settings">
+            <Link href="/carrier-dashboard/settings">
               <Settings className="mr-2" />
               Settings
             </Link>

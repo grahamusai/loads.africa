@@ -11,7 +11,7 @@ export default function Sidebar() {
   return (
     <aside className="w-64 bg-sidebar border-r border-sidebar-border">
       <div className="p-6">
-        <h1 className="text-xl font-bold text-[#074d41]">Loads Africa</h1>
+        <h1 className="text-xl font-bold text-blue-600">Loads Africa</h1>
       </div>
       
       <nav className="px-3 py-2">
@@ -21,12 +21,12 @@ export default function Sidebar() {
             variant="ghost"
             className={cn(
               "w-full justify-start font-semibold text-lg ",
-              pathname === "/dashboard"
-                ? "bg-[#074d41] text-white hover:bg-[#074d41] hover:text-white font-semibold"
+              pathname === "/clearing-agents"
+                ? "bg-blue-600 text-white hover:bg-blue-600 hover:text-white font-semibold"
                 : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >
-            <Link href="/dashboard">
+            <Link href="/clearing-agents">
               <Home className="mr-2" />
               Dashboard
             </Link>
@@ -37,29 +37,29 @@ export default function Sidebar() {
             variant="ghost"
             className={cn(
               "w-full justify-start font-semibold text-lg ",
-              pathname === "/dashboard/loads"
-                ? "bg-[#074d41] text-white hover:bg-[#074d41] hover:text-white font-semibold"
+              pathname === "/clearing-agents/loads"
+                ? "bg-blue-600 text-white hover:bg-blue-600 hover:text-white font-semibold"
                 : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >
-            <Link href="/dashboard/loads">
+            <Link href="/clearing-agents/loads">
               <PackageOpen className="mr-2" />
               Loads
             </Link>
           </Button>
-         
+          
           
           <Button
             asChild
             variant="ghost"
             className={cn(
               "w-full justify-start font-semibold text-lg ",
-              pathname === "/dashboard/tracking"
-                ? "bg-[#074d41] text-white hover:bg-[#074d41] hover:text-white font-semibold"
+              pathname === "/clearing-agents/tracking"
+                ? "bg-blue-600 text-white hover:bg-blue-600 hover:text-white font-semibold"
                 : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >
-            <Link href="/dashboard/tracking">
+            <Link href="/clearing-agents/tracking">
               <MapPin className="mr-2" />
               Tracking
             </Link>
@@ -70,12 +70,12 @@ export default function Sidebar() {
             variant="ghost"
             className={cn(
               "w-full justify-start font-semibold text-lg ",
-              pathname === "/dashboard/settings"
-                ? "bg-[#074d41] text-white hover:bg-[#074d41] hover:text-white font-semibold"
+              pathname === "/clearing-agents/settings"
+                ? "bg-blue-600 text-white hover:bg-blue-600 hover:text-white font-semibold"
                 : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >
-            <Link href="/dashboard/settings">
+            <Link href="/clearing-agents/settings">
               <Settings className="mr-2" />
               Settings
             </Link>
