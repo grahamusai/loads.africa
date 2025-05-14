@@ -25,8 +25,7 @@ const drivers = [
     licenseExpiry: "2025-06-15",
     location: "Lagos, Nigeria",
     joinDate: "2020-03-12",
-    hoursAvailable: 8,
-    hoursWorked: 32,
+
     performance: {
       onTimeDelivery: 98,
       safetyScore: 95,
@@ -52,8 +51,7 @@ const drivers = [
     licenseExpiry: "2024-11-30",
     location: "Abidjan, Côte d'Ivoire to Accra, Ghana",
     joinDate: "2019-07-22",
-    hoursAvailable: 2,
-    hoursWorked: 38,
+ 
     performance: {
       onTimeDelivery: 100,
       safetyScore: 98,
@@ -84,8 +82,7 @@ const drivers = [
     licenseExpiry: "2024-08-22",
     location: "Johannesburg, South Africa",
     joinDate: "2021-02-15",
-    hoursAvailable: 10,
-    hoursWorked: 0,
+
     performance: {
       onTimeDelivery: 94,
       safetyScore: 92,
@@ -111,8 +108,7 @@ const drivers = [
     licenseExpiry: "2025-03-18",
     location: "Port Harcourt to Calabar, Nigeria",
     joinDate: "2018-11-05",
-    hoursAvailable: 4,
-    hoursWorked: 36,
+
     performance: {
       onTimeDelivery: 97,
       safetyScore: 96,
@@ -143,8 +139,7 @@ const drivers = [
     licenseExpiry: "2023-12-10",
     location: "Cairo, Egypt",
     joinDate: "2019-05-20",
-    hoursAvailable: 0,
-    hoursWorked: 0,
+
     performance: {
       onTimeDelivery: 92,
       safetyScore: 88,
@@ -166,8 +161,7 @@ const drivers = [
     licenseExpiry: "2025-01-25",
     location: "Nairobi, Kenya",
     joinDate: "2022-01-10",
-    hoursAvailable: 10,
-    hoursWorked: 30,
+
     performance: {
       onTimeDelivery: 99,
       safetyScore: 97,
@@ -325,20 +319,7 @@ export default function DriversPage() {
                         </div>
                       </div>
 
-                      {driver.status !== "inactive" && (
-                        <div className="mb-4">
-                          <div className="mb-1 flex items-center justify-between text-sm">
-                            <span>Hours of Service</span>
-                            <span>
-                              {driver.hoursWorked}/{driver.hoursWorked + driver.hoursAvailable}
-                            </span>
-                          </div>
-                          <Progress
-                            value={(driver.hoursWorked / (driver.hoursWorked + driver.hoursAvailable)) * 100}
-                            className="h-2"
-                          />
-                        </div>
-                      )}
+                      
 
                       {driver.truck ? (
                         <div className="mb-4 rounded-md bg-blue-50 p-2 text-sm text-blue-800 dark:bg-blue-900/30 dark:text-blue-200">
@@ -417,7 +398,6 @@ export default function DriversPage() {
                     <th className="px-4 py-3 text-left font-medium">Contact</th>
                     <th className="px-4 py-3 text-left font-medium">Location</th>
                     <th className="px-4 py-3 text-left font-medium">License</th>
-                    <th className="px-4 py-3 text-left font-medium">Hours</th>
                     <th className="px-4 py-3 text-left font-medium">Truck</th>
                     <th className="px-4 py-3 text-left font-medium">Actions</th>
                   </tr>
@@ -464,21 +444,7 @@ export default function DriversPage() {
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          {driver.status !== "inactive" ? (
-                            <div>
-                              <div className="flex items-center justify-between text-xs">
-                                <span>
-                                  {driver.hoursWorked}/{driver.hoursWorked + driver.hoursAvailable}
-                                </span>
-                              </div>
-                              <Progress
-                                value={(driver.hoursWorked / (driver.hoursWorked + driver.hoursAvailable)) * 100}
-                                className="h-1.5 w-16"
-                              />
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">N/A</span>
-                          )}
+                          
                         </td>
                         <td className="px-4 py-3">
                           {driver.truck ? (

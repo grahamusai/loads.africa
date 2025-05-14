@@ -15,8 +15,16 @@ import Link from "next/link"
 
 // Define fetcher function to fetch loads from PocketBase
 const fetcher = async () => {
+  // Get the current user's ID
+  const userId = pb.authStore.model?.id
+  if (!userId) {
+    throw new Error("User not authenticated")
+  }
+  
+  // Fetch loads where the carrier field matches the current user's ID
   const records = await pb.collection('loads').getList(1, 50, {
     sort: '-created',
+    filter: `carrier = "${userId}"`,
   })
   return records.items
 }
@@ -46,10 +54,8 @@ export default function LoadsPage() {
     return <div>Error loading data</div>
   }
 
-  // Filter for only posted loads and take the first 10
-  const displayedLoads = (loads || [])
-    .filter(load => load.status === "posted")
-    .slice(0, 10)
+  // Display all loads assigned to the carrier (no filtering by status)
+  const displayedLoads = loads || []
 
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -59,7 +65,10 @@ export default function LoadsPage() {
     <div className="container mx-auto p-4 md:p-6 ">
       <div className="mb-6 flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl text-[#003039] font-bold md:text-3xl">Available Loads</h1>
+          <div>
+            <h1 className="text-2xl text-[#003039] font-bold md:text-3xl">My Loads</h1>
+            <p className="text-muted-foreground">View and manage loads assigned to you</p>
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">

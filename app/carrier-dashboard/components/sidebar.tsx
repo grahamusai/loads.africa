@@ -1,7 +1,7 @@
 'use client'
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PackageOpen,Truck, Globe, Home, Settings, Users, MapPin } from "lucide-react";
+import { PackageOpen,Truck, Globe, Home, Settings, Users, MapPin, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -43,8 +43,23 @@ export default function Sidebar() {
             )}
           >
             <Link href="/carrier-dashboard/loads">
+              <Package className="mr-2" />
+              All Loads
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant="ghost"
+            className={cn(
+              "w-full justify-start font-semibold text-lg ",
+              pathname === "/carrier-dashboard/my-loads"
+                ? "bg-[#008080] text-white hover:bg-[#008080] hover:text-white font-semibold"
+                : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            )}
+          >
+            <Link href="/carrier-dashboard/my-loads">
               <PackageOpen className="mr-2" />
-              Loads
+              My Loads
             </Link>
           </Button>
           <Button

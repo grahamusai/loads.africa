@@ -1,4 +1,8 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   AlertTriangle,
   ArrowLeft,
@@ -8,6 +12,7 @@ import {
   Download,
   Edit,
   FileText,
+  Loader2,
   MapPin,
   Package,
   Printer,
@@ -83,7 +88,7 @@ const getLoadDetails = async (id: string): Promise<Load> => {
   }
 }
 
-export type LoadStatus = "draft" | "pending" | "in-transit" | "delivered" | "delayed" | "cancelled";
+export type LoadStatus = "draft" | "pending" | "in-transit" | "delivered" | "delayed" | "cancelled" | "requested";
 
 export type TrackingEvent = {
   timestamp: string;
@@ -129,12 +134,19 @@ export interface Load {
   trackingEvents?: TrackingEvent[];
 }
 
-export default async function LoadDetailsPage({ params }: PageParams) {
-  const load = await getLoadDetails(params.id);
+export default function LoadDetailsPage({ params }: PageParams) {
+  const [isRequesting, setIsRequesting] = useState(false);
+  const [load, setLoad] = useState<Load | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    getLoadDetails(params.id).then(setLoad);
+  }, [params.id]);
 
   const statusColors = {
     draft: "bg-gray-500",
     pending: "bg-blue-500",
+    requested: "bg-yellow-500",
     "in-transit": "bg-amber-500",
     delivered: "bg-green-500",
     delayed: "bg-red-500",
@@ -144,6 +156,7 @@ export default async function LoadDetailsPage({ params }: PageParams) {
   const statusLabels = {
     draft: "Draft",
     pending: "Pending",
+    requested: "Requested",
     "in-transit": "In Transit",
     delivered: "Delivered",
     delayed: "Delayed",
@@ -164,24 +177,40 @@ export default async function LoadDetailsPage({ params }: PageParams) {
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat("en-NG", {
       style: "currency",
-      currency: load.currency || "USD",
+      currency: load?.currency || "USD",
       maximumFractionDigits: 0,
     }).format(amount);
   }
 
-  // Handle tracking events - could be a relation field in Pocketbase or stored differently
-  // This is a fallback if tracking events aren't available in the record
-  const trackingEvents = load.trackingEvents || [
-    {
-      timestamp: load.pickupDate,
-      status: "Picked Up",
-      location: load.origin,
-      notes: "Load picked up",
-    }
-  ];
+  const handleRequestLoad = async () => {
+    try {
+      setIsRequesting(true);
+      const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://localhost:8090');
+      
+      // Update the load status to requested
+      await pb.collection('loads').update(params.id, {
+        status: 'requested'
+      });
 
-  const paymentStatus = load.paymentStatus || "Pending";
-  const paymentAmount = load.paymentAmount || 0;
+      // Update local state
+      setLoad(prev => prev ? { ...prev, status: 'requested' } : null);
+
+      // Refresh the page
+      router.refresh();
+    } catch (error) {
+      console.error("Error requesting load:", error);
+    } finally {
+      setIsRequesting(false);
+    }
+  };
+
+  if (!load) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -210,18 +239,12 @@ export default async function LoadDetailsPage({ params }: PageParams) {
             <Printer className="mr-2 h-4 w-4" />
             Print
           </Button>
-          <Button variant="outline" size="sm">
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
-          <Button variant="outline" size="sm">
+         
+          <Button  size="sm">
             <Share2 className="mr-2 h-4 w-4" />
             Share
           </Button>
-          <Button size="sm">
-            <Edit className="mr-2 h-4 w-4" />
-            Edit Load
-          </Button>
+          
         </div>
       </div>
 
@@ -354,13 +377,13 @@ export default async function LoadDetailsPage({ params }: PageParams) {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-sm">Amount:</span>
-                        <span className="font-medium">{formatCurrency(paymentAmount)}</span>
+                        <span className="font-medium">{formatCurrency(load.paymentAmount || 0)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm">Status:</span>
                         {/* @ts-ignore */}
-                        <Badge variant={paymentStatus === "Paid" ? "default" : "secondary"}>
-                          {paymentStatus}
+                        <Badge variant={load.paymentStatus === "Paid" ? "default" : "secondary"}>
+                          {load.paymentStatus || "Pending"}
                         </Badge>
                       </div>
                     </div>
@@ -405,9 +428,13 @@ export default async function LoadDetailsPage({ params }: PageParams) {
               </div>
 
               <div className="pt-2">
-                <Button className="w-full">
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Update Status
+                <Button className="w-full" onClick={handleRequestLoad} disabled={isRequesting}>
+                  {isRequesting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                  )}
+                  Request Load
                 </Button>
               </div>
             </CardContent>
@@ -428,13 +455,11 @@ export default async function LoadDetailsPage({ params }: PageParams) {
                 <TabsTrigger value="documents">Documents</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="timeline" className="space-y-0">
-                <div className="relative pl-6 pb-6">
-                    {/* @ts-ignore */}
-                  {trackingEvents.map((event, index) => (
+              <TabsContent value="timeline" className="space-y-0">                <div className="relative pl-6 pb-6">
+                  {(load.trackingEvents || []).map((event, index) => (
                     <div key={index} className="relative mb-8 last:mb-0">
                       {/* Timeline connector */}
-                      {index < trackingEvents.length - 1 && (
+                      {index < (load.trackingEvents?.length ?? 0) - 1 && (
                         <div className="absolute top-2 left-[-24px] h-full w-0.5 bg-muted"></div>
                       )}
 

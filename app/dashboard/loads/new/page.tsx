@@ -131,10 +131,9 @@ export default function NewLoadPage() {
       visibility: "public",
     },
   })
-
   // Get form values for preview
   const formValues = form.watch()
-
+  
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
@@ -143,21 +142,12 @@ export default function NewLoadPage() {
       // Format the data according to PocketBase schema
       const formattedData = {
         reference_number: data.reference_number || generateReferenceNumber(),
-        origin: data.origin,
-        origin_address: data.originAddress,
-        destination: data.destination,
-        destination_address: data.destinationAddress,
-        pickup_date: data.pickupDate.toISOString(),
-        pickup_time: data.pickupTime,
-        delivery_date: data.deliveryDate.toISOString(),
-        delivery_time: data.deliveryTime,
-        equipment_type: data.equipment_type,
         status: "draft",
         visibility: data.visibility,
-        distance: data.distance ? parseFloat(data.distance) : null,
         isHazardous: data.isHazardous || false,
         isExpedited: data.isExpedited || false,
-        completedAt: null, // Will be set when the load is completed
+        assignedAt: null,
+        completedAt: null,
         cargo_description: data.cargo_description,
         weight: data.weight ? parseFloat(data.weight) : null,
         length: data.length ? parseFloat(data.length) : null,
@@ -169,6 +159,16 @@ export default function NewLoadPage() {
         accessorialServices: data.accessorialServices || null,
         temperatureMin: data.temperatureMin ? parseFloat(data.temperatureMin) : null,
         temperatureMax: data.temperatureMax ? parseFloat(data.temperatureMax) : null,
+        equipment_type: data.equipment_type,
+        origin: data.origin,
+        origin_address: data.originAddress,
+        destination: data.destination,
+        destination_address: data.destinationAddress,
+        pickup_date: data.pickupDate ? new Date(data.pickupDate).toISOString().split('T')[0] : null,
+        pickup_time: data.pickupTime || null,
+        delivery_date: data.deliveryDate ? new Date(data.deliveryDate).toISOString().split('T')[0] : null,
+        delivery_time: data.deliveryTime || null,
+        distance: data.distance ? parseFloat(data.distance) : null,
         company_name: data.companyName,
       };
 
@@ -522,11 +522,11 @@ export default function NewLoadPage() {
                         name="weight"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Weight (lbs)</FormLabel>
+                            <FormLabel>Weight (kgs)</FormLabel>
                             <FormControl>
                               <Input type="text" placeholder="e.g. 15000" {...field} />
                             </FormControl>
-                            <FormDescription>Total weight in pounds</FormDescription>
+                            <FormDescription>Total weight in killograms</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -755,7 +755,7 @@ export default function NewLoadPage() {
 
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Weight</p>
-                          <p>{formValues.weight ? `${formValues.weight} lbs` : "Not specified"}</p>
+                          <p>{formValues.weight ? `${formValues.weight} kgs` : "Not specified"}</p>
                         </div>
 
                         <div>
