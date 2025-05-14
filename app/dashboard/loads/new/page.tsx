@@ -59,6 +59,7 @@ const formSchema = z.object({
 
   // Step 2: Load Details
   cargo_description: z.string().min(2, { message: "Cargo description is required" }),
+  cargo_name: z.string().min(2, { message: "Cargo description is required" }),
   isHazardous: z.boolean().default(false),
   isExpedited: z.boolean().default(false),
   weight: z.string().min(1, { message: "Weight is required" }),
@@ -111,6 +112,7 @@ export default function NewLoadPage() {
       pickupTime: "",
       deliveryTime: "",
       cargo_description: "",
+      cargo_name: "",
       isHazardous: false,
       isExpedited: false,
       weight: "",
@@ -149,6 +151,7 @@ export default function NewLoadPage() {
         assignedAt: null,
         completedAt: null,
         cargo_description: data.cargo_description,
+        cargo_name: data.cargo_name,
         weight: data.weight ? parseFloat(data.weight) : null,
         length: data.length ? parseFloat(data.length) : null,
         width: data.width ? parseFloat(data.width) : null,
@@ -211,6 +214,7 @@ export default function NewLoadPage() {
       case 2:
         fieldsToValidate = [
           "cargo_description", 
+          "cargo_name", 
           "weight", 
           "equipment_type",
         ]
@@ -482,6 +486,20 @@ export default function NewLoadPage() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="grid gap-4 md:grid-cols-2">
+                      
+                      <FormField
+                        control={form.control as unknown as Control<FormValues>}
+                        name="cargo_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Cargo Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g Maize" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                       <FormField
                         control={form.control as unknown as Control<FormValues>}
                         name="cargo_description"
@@ -489,7 +507,7 @@ export default function NewLoadPage() {
                           <FormItem>
                             <FormLabel>Cargo Description</FormLabel>
                             <FormControl>
-                              <Input placeholder="e.g. Packaged goods, Pallets, etc." {...field} />
+                              <Textarea placeholder="e.g. Packaged goods, Pallets, etc." {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -743,6 +761,10 @@ export default function NewLoadPage() {
                       </div>
 
                       <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Cargo Name</p>
+                          <p>{formValues.cargo_name || "Not specified"}</p>
+                        </div>
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Cargo Description</p>
                           <p>{formValues.cargo_description || "Not specified"}</p>

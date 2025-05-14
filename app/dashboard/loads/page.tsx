@@ -186,7 +186,7 @@ export default function LoadsPage() {
                           </div>
                           <div className="flex items-center gap-2">
                             <Package className="h-4 w-4 text-muted-foreground" />
-                            <span>{load.cargo}</span>
+                            <span>{load.cargo_name}</span>
                           </div>
                         </div>
                       </div>
