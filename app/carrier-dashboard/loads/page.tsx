@@ -59,7 +59,7 @@ export default function LoadsPage() {
     <div className="container mx-auto p-4 md:p-6 ">
       <div className="mb-6 flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl text-[#003039] font-bold md:text-3xl">Available Loads</h1>
+          <h1 className="text-2xl text-[#1b858f] font-bold md:text-3xl">Available Loads</h1>
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
@@ -178,7 +178,7 @@ export default function LoadsPage() {
                           </div>
                           <div className="flex items-center gap-2">
                             <Package className="h-4 w-4 text-muted-foreground" />
-                            <span>{load.cargo}</span>
+                            <span>{load.cargo_name}</span>
                           </div>
                         </div>
                       </div>
@@ -186,7 +186,7 @@ export default function LoadsPage() {
                       <div className="mt-4 flex items-center justify-between md:col-span-3 md:mt-0 md:flex-col md:items-end md:justify-start">
                         <div className="text-sm text-muted-foreground">{load.company}</div>
                         <Link href={`/carrier-dashboard/loads/${load.id}`} className="cursor-pointer" >
-                        <Button className="mt-2 bg-[#003039]">View Details</Button>
+                        <Button className="mt-2 bg-[#1b858f]">View Details</Button>
                         </Link>
                       </div>
                     </div>

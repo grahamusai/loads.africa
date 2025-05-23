@@ -10,8 +10,8 @@ export default function Sidebar() {
 
   return (
     <aside className="w-64 bg-sidebar border-r border-sidebar-border">
-      <div className="p-6">
-        <h1 className="text-xl font-bold text-blue-600">Loads Africa</h1>
+       <div className="p-6">
+        <img src="/images/logo.png" alt="" />
       </div>
       
       <nav className="px-3 py-2">
@@ -22,7 +22,7 @@ export default function Sidebar() {
             className={cn(
               "w-full justify-start font-semibold text-lg ",
               pathname === "/clearing-agents"
-                ? "bg-blue-600 text-white hover:bg-blue-600 hover:text-white font-semibold"
+                ? "bg--[#1b858f] text-white hover:bg--[#1b858f] hover:text-white font-semibold"
                 : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >
@@ -38,7 +38,7 @@ export default function Sidebar() {
             className={cn(
               "w-full justify-start font-semibold text-lg ",
               pathname === "/clearing-agents/loads"
-                ? "bg-blue-600 text-white hover:bg-blue-600 hover:text-white font-semibold"
+                ? "bg--[#1b858f] text-white hover:bg-[#1b858f] hover:text-white font-semibold"
                 : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >
@@ -55,7 +55,7 @@ export default function Sidebar() {
             className={cn(
               "w-full justify-start font-semibold text-lg ",
               pathname === "/clearing-agents/tracking"
-                ? "bg-blue-600 text-white hover:bg-blue-600 hover:text-white font-semibold"
+                ? "bg--[#1b858f] text-white hover:bg-[#1b858f] hover:text-white font-semibold"
                 : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >
@@ -71,7 +71,7 @@ export default function Sidebar() {
             className={cn(
               "w-full justify-start font-semibold text-lg ",
               pathname === "/clearing-agents/settings"
-                ? "bg-blue-600 text-white hover:bg-blue-600 hover:text-white font-semibold"
+                ? "bg--[#1b858f] text-white hover:bg-[#1b858f] hover:text-white font-semibold"
                 : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >

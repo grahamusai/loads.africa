@@ -4,17 +4,75 @@ import { useState } from "react"
 import pb from "@/lib/pocketbase"
 import useSWR from "swr"
 import { useRouter } from "next/navigation"
-import { Calendar, Clock, CirclePlus, MapPin, Package, Search, Truck, TruckIcon, Weight, ArrowRight } from "lucide-react"
+import { Calendar, Clock, Settings, MapPin, Package, Search, Truck, TruckIcon, Weight, ArrowRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import Link from "next/link"
 
+// Define the Load type
+interface Load {
+  id: string;
+  reference_number: string;
+  status: 'draft' | 'pending' | 'in_transit' | 'completed' | 'cancelled';
+  visibility: string;
+  currency: string;
+  distance: number;
+  isHazardous: boolean;
+  isExpedited: boolean;
+  assignedAt: string;
+  completedAt: string;
+  cargo_description: string;
+  weight: number;
+  length: number;
+  width: number;
+  height: number;
+  pieceCount: number;
+  packagingType: string;
+  specialRequirements: string;
+  accessorialServices: string;
+  temperatureMin: number;
+  temperatureMax: number;
+  equipment_type: string;
+  origin: string;
+  destination: string;
+  pickupDate: string;
+  deliveryDate: string;
+  cargo_name: string;
+  paymentAmount: number;
+  carrier: string;
+  documents: string[];
+  current_location?: string;
+  driver_name?: string;
+  created: string;
+  updated: string;
+}
+
 // Define fetcher function to fetch loads from PocketBase
-const fetcher = async () => {
+interface Load {
+  id: string
+  status: 'draft' | 'pending' | 'in_transit' | 'completed' | 'cancelled'
+  current_location?: string
+  driver_name?: string
+  origin: string
+  destination: string
+  pickupDate: string
+  pickupTime: string
+  deliveryDate: string
+  deliveryTime: string
+  equipment_type: string
+  weight: number
+  distance: number
+  cargo_name: string
+  company: string
+  rate: string
+}
+
+const fetcher = async (): Promise<Load[]> => {
   // Get the current user's ID
   const userId = pb.authStore.model?.id
   if (!userId) {
@@ -26,20 +84,22 @@ const fetcher = async () => {
     sort: '-created',
     filter: `carrier = "${userId}"`,
   })
-  return records.items
+  return records.items as unknown as Load[]
 }
 
 // Status badge color mapping
 const getStatusColor = (status: string) => {
   switch (status) {
-    case "posted":
-      return "bg-blue-500"
-    case "assigned":
+    case "draft":
+      return "bg-gray-500"
+    case "pending":
       return "bg-yellow-500"
-    case "in transit":
+    case "in_transit":
       return "bg-green-500"
-    case "delivered":
-      return "bg-slate-500"
+    case "completed":
+      return "bg-purple-500"
+    case "cancelled":
+      return "bg-red-500"
     default:
       return "bg-gray-500"
   }
@@ -47,8 +107,43 @@ const getStatusColor = (status: string) => {
 
 export default function LoadsPage() {
   const router = useRouter()
+  const { data: loads, error, mutate } = useSWR<Load[]>("/loads", fetcher)
 
-  const { data: loads, error } = useSWR("/loads", fetcher)
+  const [selectedLoad, setSelectedLoad] = useState<Load | null>(null)
+  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false)
+  const [updateForm, setUpdateForm] = useState({
+    status: "",
+    current_location: "",
+    driver_name: ""
+  })
+  const handleUpdateLoad = async () => {
+    if (!selectedLoad) return
+
+    try {
+      const updateData = {
+        status: updateForm.status,
+        current_location: updateForm.current_location || null,
+        driver_name: updateForm.driver_name || null,
+        updated: new Date().toISOString()
+      }
+      await pb.collection('loads').update(selectedLoad.id, updateData)
+      setIsUpdateDialogOpen(false)
+      mutate() // Refresh the loads data
+    } catch (error) {
+      console.error("Error updating load:", error)
+    }
+  }
+
+  const handleManageLoad = (load: Load) => {
+    setSelectedLoad(load)
+    setUpdateForm({
+      status: load.status,
+      current_location: load.current_location || "",
+      driver_name: load.driver_name || ""
+    })
+    setIsUpdateDialogOpen(true)
+  }
+
   if (error) {
     console.error("Error fetching loads:", error)
     return <div>Error loading data</div>
@@ -66,7 +161,7 @@ export default function LoadsPage() {
       <div className="mb-6 flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl text-[#003039] font-bold md:text-3xl">My Loads</h1>
+            <h1 className="text-2xl text-[#1b858f] font-bold md:text-3xl">My Loads</h1>
             <p className="text-muted-foreground">View and manage loads assigned to you</p>
           </div>
         </div>
@@ -85,13 +180,13 @@ export default function LoadsPage() {
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger>
               <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
+            </SelectTrigger>              <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="posted">Posted</SelectItem>
-              <SelectItem value="assigned">Assigned</SelectItem>
-              <SelectItem value="in transit">In Transit</SelectItem>
-              <SelectItem value="delivered">Delivered</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="in_transit">In Transit</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
 
@@ -187,24 +282,21 @@ export default function LoadsPage() {
                           </div>
                           <div className="flex items-center gap-2">
                             <Package className="h-4 w-4 text-muted-foreground" />
-                            <span>{load.cargo}</span>
+                            <span>{load.cargo_name}</span>
                           </div>
                         </div>
-                      </div>
-
-                      <div className="mt-4 flex items-center justify-between md:col-span-3 md:mt-0 md:flex-col md:items-end md:justify-start">
+                      </div>                      <div className="mt-4 flex items-center justify-between md:col-span-3 md:mt-0 md:flex-col md:items-end md:justify-start">
                         <div className="text-sm text-muted-foreground">{load.company}</div>
-                        <Link href={`/carrier-dashboard/loads/${load.id}`} className="cursor-pointer" >
-                        <Button className="mt-2 bg-[#003039]">View Details</Button>
-                        </Link>
+                        <Button onClick={() => handleManageLoad(load)} className="mt-2 bg-[#1b858f] rounded-full">
+                          <Settings className="mr-2" /> Manage Load
+                        </Button>
                       </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             ))
-          )}
-        </TabsContent>
+          )}        </TabsContent>
 
         <TabsContent value="map">
           <div className="flex h-[500px] items-center justify-center rounded-lg border">
@@ -217,7 +309,67 @@ export default function LoadsPage() {
             </div>
           </div>
         </TabsContent>
-      </Tabs>
+      </Tabs>      {/* Update Load Dialog */}
+      {selectedLoad && (
+        <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Update Load</DialogTitle>
+            </DialogHeader>
+
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <label htmlFor="status" className="text-sm font-medium">Status</label>
+                <Select
+                  value={updateForm.status}
+                  onValueChange={(value) => setUpdateForm({ ...updateForm, status: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="in_transit">In Transit</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <label htmlFor="current_location" className="text-sm font-medium">Current Location</label>
+                <Input
+                  id="current_location"
+                  placeholder="Current location"
+                  value={updateForm.current_location}
+                  onChange={(e) => setUpdateForm({ ...updateForm, current_location: e.target.value })}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <label htmlFor="driver_name" className="text-sm font-medium">Driver Name</label>
+                <Input
+                  id="driver_name"
+                  placeholder="Driver's name"
+                  value={updateForm.driver_name}
+                  onChange={(e) => setUpdateForm({ ...updateForm, driver_name: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsUpdateDialogOpen(false)}
+                className="mr-2"
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleUpdateLoad} className="bg-[#1b858f]">Update Load</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

@@ -61,6 +61,7 @@ const getLoadDetails = async (id: string): Promise<Load> => {
       vehicle: record.vehicle,
       assignedAt: record.assignedAt,
       cargo_description: record.cargo_description,
+      cargo_name: record.cargo_name,
       weight: record.weight,
       length: record.length,
       width: record.width,
@@ -114,6 +115,7 @@ export interface Load {
   vehicle?: string;
   assignedAt?: string;
   cargo_description?: string;
+  cargo_name?: string;
   weight?: number;
   length?: number;
   width?: number;
@@ -317,6 +319,10 @@ export default function LoadDetailsPage({ params }: PageParams) {
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground mb-2">Cargo Details</h3>
                     <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm">Description:</span>
+                        <span className="font-medium text-right">{load.cargo_name}</span>
+                      </div>
                       <div className="flex justify-between">
                         <span className="text-sm">Description:</span>
                         <span className="font-medium text-right">{load.cargo_description}</span>

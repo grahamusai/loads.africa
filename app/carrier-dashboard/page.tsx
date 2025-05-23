@@ -6,7 +6,7 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-[#003039]">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-[#1b858f]">Dashboard</h1>
         <p className="text-muted-foreground mt-2">Welcome to your dashboard overview.</p>
       </div>
 

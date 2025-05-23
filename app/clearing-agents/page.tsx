@@ -1,6 +1,8 @@
+'use client'
 import Link from "next/link"
+import { useState, useEffect } from "react"
 import { AlertCircle, Check, ChevronDown, Clock, FileCheck, FileText, Filter, MapPin, Search, X } from "lucide-react"
-
+import pb from "../../lib/pocketbase"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,172 +22,18 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
-// Sample data for clearing agent dashboard
-const loads = [
-  {
-    id: "LDN-2305-KGL",
-    origin: "Lagos, Nigeria",
-    destination: "Kigali, Rwanda",
-    status: "pending-clearance",
-    customer: "EastAfrica Distributors",
-    pickupDate: "2025-05-06",
-    deliveryDate: "2025-05-12",
-    borderCrossings: [
-      "Nigeria-Benin",
-      "Benin-Togo",
-      "Togo-Ghana",
-      "Ghana-Burkina Faso",
-      "Burkina Faso-Niger",
-      "Niger-Nigeria",
-      "Nigeria-Cameroon",
-      "Cameroon-Central African Republic",
-      "Central African Republic-South Sudan",
-      "South Sudan-Uganda",
-      "Uganda-Rwanda",
-    ],
-    currentLocation: "Lomé, Togo",
-    clearanceStatus: "in-progress",
-    documents: [
-      { id: "doc-1", name: "Commercial Invoice", status: "approved", required: true, submittedAt: "2025-05-05" },
-      { id: "doc-2", name: "Packing List", status: "approved", required: true, submittedAt: "2025-05-05" },
-      { id: "doc-3", name: "Bill of Lading", status: "approved", required: true, submittedAt: "2025-05-05" },
-      { id: "doc-4", name: "Certificate of Origin", status: "pending", required: true, submittedAt: "2025-05-05" },
-      { id: "doc-5", name: "Import License", status: "pending", required: true, submittedAt: null },
-      {
-        id: "doc-6",
-        name: "Customs Declaration Form",
-        status: "rejected",
-        required: true,
-        submittedAt: "2025-05-05",
-        notes: "Incorrect HS code used. Please resubmit with correct classification.",
-      },
-      { id: "doc-7", name: "Phytosanitary Certificate", status: "not-required", required: false, submittedAt: null },
-    ],
-    priority: "high",
-    notes: "Urgent delivery needed. Customer has paid expedited clearance fees.",
-  },
-  {
-    id: "NBO-4721-CPT",
-    origin: "Nairobi, Kenya",
-    destination: "Cape Town, South Africa",
-    status: "pending-clearance",
-    customer: "Southern Trade Co.",
-    pickupDate: "2025-05-10",
-    deliveryDate: "2025-05-18",
-    borderCrossings: ["Kenya-Tanzania", "Tanzania-Zambia", "Zambia-Zimbabwe", "Zimbabwe-South Africa"],
-    currentLocation: "Dar es Salaam, Tanzania",
-    clearanceStatus: "pending",
-    documents: [
-      { id: "doc-8", name: "Commercial Invoice", status: "approved", required: true, submittedAt: "2025-05-08" },
-      { id: "doc-9", name: "Packing List", status: "approved", required: true, submittedAt: "2025-05-08" },
-      { id: "doc-10", name: "Bill of Lading", status: "pending", required: true, submittedAt: "2025-05-08" },
-      { id: "doc-11", name: "Certificate of Origin", status: "pending", required: true, submittedAt: "2025-05-08" },
-      { id: "doc-12", name: "Import License", status: "not-submitted", required: true, submittedAt: null },
-      { id: "doc-13", name: "Customs Declaration Form", status: "not-submitted", required: true, submittedAt: null },
-      {
-        id: "doc-14",
-        name: "COMESA Simplified Trade Regime Form",
-        status: "not-submitted",
-        required: true,
-        submittedAt: null,
-      },
-    ],
-    priority: "medium",
-    notes: "Agricultural goods requiring phytosanitary inspection at border.",
-  },
-  {
-    id: "ACC-1834-ADD",
-    origin: "Accra, Ghana",
-    destination: "Addis Ababa, Ethiopia",
-    status: "cleared",
-    customer: "East African Imports",
-    pickupDate: "2025-05-02",
-    deliveryDate: "2025-05-09",
-    borderCrossings: [
-      "Ghana-Togo",
-      "Togo-Benin",
-      "Benin-Nigeria",
-      "Nigeria-Cameroon",
-      "Cameroon-Central African Republic",
-      "Central African Republic-South Sudan",
-      "South Sudan-Ethiopia",
-    ],
-    currentLocation: "Addis Ababa, Ethiopia",
-    clearanceStatus: "completed",
-    documents: [
-      { id: "doc-15", name: "Commercial Invoice", status: "approved", required: true, submittedAt: "2025-05-01" },
-      { id: "doc-16", name: "Packing List", status: "approved", required: true, submittedAt: "2025-05-01" },
-      { id: "doc-17", name: "Bill of Lading", status: "approved", required: true, submittedAt: "2025-05-01" },
-      { id: "doc-18", name: "Certificate of Origin", status: "approved", required: true, submittedAt: "2025-05-01" },
-      { id: "doc-19", name: "Import License", status: "approved", required: true, submittedAt: "2025-05-01" },
-      { id: "doc-20", name: "Customs Declaration Form", status: "approved", required: true, submittedAt: "2025-05-01" },
-      { id: "doc-21", name: "Transit Goods License", status: "approved", required: true, submittedAt: "2025-05-01" },
-    ],
-    priority: "low",
-    notes: "Clearance completed at all border points.",
-  },
-  {
-    id: "JHB-9273-DAR",
-    origin: "Johannesburg, South Africa",
-    destination: "Dar es Salaam, Tanzania",
-    status: "pending-clearance",
-    customer: "Tanzania Retail Group",
-    pickupDate: "2025-04-28",
-    deliveryDate: "2025-05-04",
-    borderCrossings: ["South Africa-Zimbabwe", "Zimbabwe-Zambia", "Zambia-Tanzania"],
-    currentLocation: "Lusaka, Zambia",
-    clearanceStatus: "delayed",
-    documents: [
-      { id: "doc-22", name: "Commercial Invoice", status: "approved", required: true, submittedAt: "2025-04-27" },
-      { id: "doc-23", name: "Packing List", status: "approved", required: true, submittedAt: "2025-04-27" },
-      { id: "doc-24", name: "Bill of Lading", status: "approved", required: true, submittedAt: "2025-04-27" },
-      {
-        id: "doc-25",
-        name: "Certificate of Origin",
-        status: "rejected",
-        required: true,
-        submittedAt: "2025-04-27",
-        notes: "SADC certificate required instead of general certificate.",
-      },
-      { id: "doc-26", name: "Import License", status: "pending", required: true, submittedAt: "2025-04-27" },
-      { id: "doc-27", name: "Customs Declaration Form", status: "pending", required: true, submittedAt: "2025-04-27" },
-      { id: "doc-28", name: "SADC Trade Certificate", status: "not-submitted", required: true, submittedAt: null },
-    ],
-    priority: "high",
-    notes: "Clearance delayed due to missing SADC documentation. Urgent resolution needed.",
-  },
-  {
-    id: "CAI-5629-CAS",
-    origin: "Cairo, Egypt",
-    destination: "Casablanca, Morocco",
-    status: "pending-clearance",
-    customer: "North Africa Trading",
-    pickupDate: "2025-05-04",
-    deliveryDate: "2025-05-11",
-    borderCrossings: ["Egypt-Libya", "Libya-Tunisia", "Tunisia-Algeria", "Algeria-Morocco"],
-    currentLocation: "Tripoli, Libya",
-    clearanceStatus: "in-progress",
-    documents: [
-      { id: "doc-29", name: "Commercial Invoice", status: "approved", required: true, submittedAt: "2025-05-03" },
-      { id: "doc-30", name: "Packing List", status: "approved", required: true, submittedAt: "2025-05-03" },
-      { id: "doc-31", name: "Bill of Lading", status: "approved", required: true, submittedAt: "2025-05-03" },
-      { id: "doc-32", name: "Certificate of Origin", status: "pending", required: true, submittedAt: "2025-05-03" },
-      { id: "doc-33", name: "Import License", status: "pending", required: true, submittedAt: "2025-05-03" },
-      { id: "doc-34", name: "Customs Declaration Form", status: "pending", required: true, submittedAt: "2025-05-03" },
-      {
-        id: "doc-35",
-        name: "Arab Free Trade Agreement Certificate",
-        status: "not-submitted",
-        required: true,
-        submittedAt: null,
-      },
-    ],
-    priority: "medium",
-    notes: "Requires Arab Free Trade Agreement documentation for reduced tariffs.",
-  },
-]
+// Loads data will be fetched from Pocketbase collection
 
 export default function ClearingAgentPage() {
+  const [loads, setLoads] = useState([])
+
+useEffect(() => {
+  const fetchLoads = async () => {
+    const response = await pb.collection('pbc_3010141149').getFullList()
+    setLoads(response)
+  }
+  fetchLoads()
+}, [])
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between p-4 border-b">
@@ -411,10 +259,10 @@ function ClearanceCard({ load }: ClearanceCardProps) {
   }
 
   const pendingDocuments = load.documents.filter(
-    (doc: any) => doc.status === "pending" || doc.status === "not-submitted" || doc.status === "rejected",
+    (doc: any) => status === "pending" || status === "not-submitted" || status === "rejected",
   ).length
 
-  const approvedDocuments = load.documents.filter((doc: any) => doc.status === "approved").length
+  const approvedDocuments = load.documents.filter((doc: any) => status === "approved").length
 
   const totalRequiredDocuments = load.documents.filter((doc: any) => doc.required).length
 
@@ -430,10 +278,10 @@ function ClearanceCard({ load }: ClearanceCardProps) {
                   <span className={`mr-1.5 h-2 w-2 rounded-full ${statusColors[load.clearanceStatus]}`} />
                   {statusLabels[load.clearanceStatus]}
                 </Badge>
-                <Badge variant="outline" className="ml-1">
+                {/* <Badge variant="outline" className="ml-1">
                   <span className={`mr-1.5 h-2 w-2 rounded-full ${priorityColors[load.priority]}`} />
                   {load.priority.charAt(0).toUpperCase() + load.priority.slice(1)} Priority
-                </Badge>
+                </Badge> */}
               </div>
               <p className="text-muted-foreground text-sm">{load.customer}</p>
             </div>
@@ -528,16 +376,16 @@ function ClearanceCard({ load }: ClearanceCardProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {load.documents.map((doc: any) => (
                     <div key={doc.id} className="flex items-start gap-3">
-                      {documentStatusIcons[doc.status]}
+                      {documentStatusIcons[status]}
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
                           <span className="font-medium">{doc.name}</span>
-                          <Badge variant="outline" className={documentStatusColors[doc.status]}>
-                            {doc.status === "not-submitted"
+                          <Badge variant="outline" className={documentStatusColors[status]}>
+                            {status === "not-submitted"
                               ? "Not Submitted"
-                              : doc.status === "not-required"
+                              : status === "not-required"
                                 ? "Not Required"
-                                : doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
+                                : status.charAt(0).toUpperCase() + status.slice(1)}
                           </Badge>
                         </div>
                         {doc.submittedAt && (

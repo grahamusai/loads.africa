@@ -227,9 +227,9 @@ export default function TrucksPage() {
     <div className="container mx-auto p-4 md:p-6">
       <div className="mb-6 flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold md:text-3xl text-[#003039]">Fleet Management</h1>
+          <h1 className="text-2xl font-bold md:text-3xl text-[#1b858f]">Fleet Management</h1>
           <Link href="/dashboard/trucks/new">
-            <Button className="bg-[#003039]">
+            <Button className="bg-[#1b858f]">
               <Plus className="mr-2 h-4 w-4" />
               Add Truck
             </Button>

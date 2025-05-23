@@ -36,7 +36,7 @@ export default function TrackingPage() {
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between p-4 border-b">
         <div>
-          <h1 className="text-2xl font-bold text-[#003039]">Load Tracking</h1>
+          <h1 className="text-2xl font-bold text-[#1b858f]">Load Tracking</h1>
           <p className="text-muted-foreground">
             Monitor and track your shipments across Africa
           </p>
