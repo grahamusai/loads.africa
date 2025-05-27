@@ -8,6 +8,7 @@ import { z } from "zod"
 import { format } from "date-fns"
 import { CalendarIcon, ChevronRight, Loader2, MapPin, Package, DollarSign, Info, Upload, X, FileText } from "lucide-react"
 import pb from "@/lib/pocketbase"
+import { sendLoadNotification } from '@/lib/emails';
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -145,12 +146,12 @@ export default function NewLoadPage() {
       const formattedData = {
         reference_number: data.reference_number || generateReferenceNumber(),
         status: "draft",
-        visibility: data.visibility,
-       
+        visibility: data.visibility || "public",
+        currency: "ZAR", // Default currency
         isHazardous: data.isHazardous || false,
         isExpedited: data.isExpedited || false,
-        assignedAt: null, // Will be set when assigned to a carrier
-        completedAt: null, // Will be set when completed
+        assignedAt: null,
+        completedAt: null,
         cargo_name: data.cargo_name,
         cargo_description: data.cargo_description,
         weight: data.weight ? parseFloat(data.weight) : null,
@@ -165,15 +166,13 @@ export default function NewLoadPage() {
         temperatureMax: data.temperatureMax ? parseFloat(data.temperatureMax) : null,
         equipment_type: data.equipment_type,
         origin: data.origin,
-        origin_address: data.originAddress,
         destination: data.destination,
-        destination_address: data.destinationAddress,
-        pickup_date: data.pickupDate ? new Date(data.pickupDate).toISOString().split('T')[0] : null,
-        pickup_time: data.pickupTime || null,
-        delivery_date: data.deliveryDate ? new Date(data.deliveryDate).toISOString().split('T')[0] : null,
-        delivery_time: data.deliveryTime || null,
+        pickupDate: data.pickupDate ? new Date(data.pickupDate).toISOString() : null,
+        deliveryDate: data.deliveryDate ? new Date(data.deliveryDate).toISOString() : null,
         distance: data.distance ? parseFloat(data.distance) : null,
-        company_name: data.companyName,
+        paymentAmount: 0, // Default value since it's required
+        current_location: data.origin, // Initially set to origin
+        driver_name: null,
       };
 
       // Append all other fields to FormData
@@ -188,8 +187,24 @@ export default function NewLoadPage() {
         Array.from(data.documents).forEach((file: File) => {
           formData.append('documents', file);
         });
-      }      // Create the record in PocketBase with FormData
-      await pb.collection('loads').create(formData);
+      }      // Create the record in PocketBase
+      const createdLoad = await pb.collection('loads').create(formData);
+
+      // Fetch all carrier users
+      const carriers = await pb.collection('users').getFullList({
+        filter: 'user_type = "carrier" && isActive = true'
+      });
+
+      // Send email notifications to all carriers
+      for (const carrier of carriers) {
+        if (carrier.emailVisibility && carrier.verified) {
+          await sendLoadNotification(
+            carrier.email,
+            `${carrier.first_name} ${carrier.last_name}`,
+            createdLoad
+          );
+        }
+      }
       
       // Redirect to loads page after successful submission
       router.push("/dashboard/loads?success=true");
@@ -832,7 +847,8 @@ export default function NewLoadPage() {
                     <CardTitle>Company Information</CardTitle>
                     <CardDescription>Provide company details for this load</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">                    <div className="grid gap-4 md:grid-cols-2">
+                  <CardContent className="space-y-6">
+                    <div className="grid gap-4 md:grid-cols-2">
                       <FormField
                         control={form.control as unknown as Control<FormValues>}
                         name="companyName"
@@ -840,7 +856,7 @@ export default function NewLoadPage() {
                           <FormItem>
                             <FormLabel>Company Name</FormLabel>
                             <FormControl>
-                              <Input placeholder="Your company name" {...field} />
+                              <Input placeholder="Enter your company name" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -854,47 +870,7 @@ export default function NewLoadPage() {
                           <FormItem>
                             <FormLabel>Distance (km)</FormLabel>
                             <FormControl>
-                              <Input type="number" placeholder="Total distance in kilometers" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control as unknown as Control<FormValues>}
-                        // @ts-ignore
-                        name="currency"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Currency</FormLabel>
-                            <Select onValueChange={(value: string) => field.onChange(value)} defaultValue={field.value?.toString()}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select currency" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="ZAR">ZAR - South African Rand</SelectItem>
-                                <SelectItem value="USD">USD - US Dollar</SelectItem>
-                                <SelectItem value="EUR">EUR - Euro</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control as unknown as Control<FormValues>}
-                        // @ts-ignore
-                        name="paymentAmount"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Payment Amount</FormLabel>
-                            <FormControl>`
-                              {/* @ts-ignore */}
-                              <Input type="number" placeholder="Enter payment amount" {...field} />
+                              <Input type="number" placeholder="e.g. 500" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -906,10 +882,13 @@ export default function NewLoadPage() {
                         name="reference_number"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Reference Number (Optional)</FormLabel>
+                            <FormLabel>Reference Number</FormLabel>
                             <FormControl>
-                              <Input placeholder="Internal reference number" {...field} />
+                              <Input placeholder="Load reference number" {...field} />
                             </FormControl>
+                            <FormDescription>
+                              Leave blank to auto-generate
+                            </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -921,7 +900,7 @@ export default function NewLoadPage() {
                       name="visibility"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Visibility</FormLabel>
+                          <FormLabel>Load Visibility</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
@@ -934,7 +913,7 @@ export default function NewLoadPage() {
                             </SelectContent>
                           </Select>
                           <FormDescription>
-                            Public loads are visible to all carriers, private loads are only visible to invited carriers
+                            Public loads are visible to all carriers
                           </FormDescription>
                           <FormMessage />
                         </FormItem>

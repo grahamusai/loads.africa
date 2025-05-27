@@ -25,10 +25,7 @@ const Navbar = () => {
       }`}
     >
       <div className="text-white container mx-auto px-4 flex justify-between items-center">
-        <div className="flex items-center">
-          <TruckIcon className="h-8 w-8 text-teal-500 mr-2" />
-          <span className="text-xl font-bold">Loads Africa</span>
-        </div>
+        <img src="/images/logo.png" alt="" />
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex space-x-8">

@@ -77,7 +77,7 @@ const Header = () => {
       className="flex flex-col sm:flex-row justify-center gap-4"
     >
       <Button className="bg-teal-500 text-black hover:bg-teal-600 text-lg px-8 py-6">
-        Start Free Trial
+        Get Started
       </Button>
       <Button variant="outline" className="border-white hover:bg-white/10 text-lg px-8 py-6">
         Schedule Demo
