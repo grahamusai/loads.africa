@@ -25,7 +25,7 @@ const Navbar = () => {
       }`}
     >
       <div className="text-white container mx-auto px-4 flex justify-between items-center">
-        <img src="/images/logo.png" alt="" />
+        <h2>Loads africa</h2>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex space-x-8">
@@ -89,28 +89,28 @@ const Navbar = () => {
           <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
             <Link
               href="#features"
-              className="py-2 hover:text-teal-500 transition-colors"
+              className="py-2 hover:text-teal-500 text-white transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
               Features
             </Link>
             <Link
               href="#benefits"
-              className="py-2 hover:text-teal-500 transition-colors"
+              className="py-2 hover:text-teal-500 text-white transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
               Benefits
             </Link>
             <Link
               href="#testimonials"
-              className="py-2 hover:text-teal-500 transition-colors"
+              className="py-2 hover:text-teal-500 text-white transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
               Testimonials
             </Link>
             <Link
               href="#pricing"
-              className="py-2 hover:text-teal-500 transition-colors"
+              className="py-2 hover:text-teal-500 text-white transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
               Pricing
@@ -118,7 +118,7 @@ const Navbar = () => {
             <div className="flex flex-col space-y-2 pt-2">
               <Button
                 variant="outline"
-                className="border-teal-500 text-teal-500 hover:bg-teal-500 hover:text-black w-full"
+                className="border-teal-500 text-teal-500  hover:bg-orange-500 hover:text-black w-full"
               >
                 Log In
               </Button>

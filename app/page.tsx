@@ -8,12 +8,12 @@ import Cta from "./components/cta";
 
 export default function Home() {
   return (
-    <>
+    <div className="overflow-x-hidden">
       <Navbar />
       <Header />
       <Features />
       <Benefits />
       <Cta />
-    </>
+    </div>
   );
 }
