@@ -16,7 +16,7 @@ import {
   Truck,
 } from "lucide-react"
 import PocketBase from 'pocketbase'
-
+import { useState, use } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -24,9 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 // Add type for params
 interface PageParams {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 }
 
 // Setup Pocketbase connection
@@ -130,7 +128,8 @@ export interface Load {
 }
 
 export default async function LoadDetailsPage({ params }: PageParams) {
-  const load = await getLoadDetails(params.id);
+  const { id } = await params;
+  const load = await getLoadDetails(id);
 
   const statusColors = {
     draft: "bg-gray-500",

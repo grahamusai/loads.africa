@@ -1,6 +1,5 @@
 "use client"
-
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -29,9 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 // Add type for params
 interface PageParams {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 }
 
 // Setup Pocketbase connection
@@ -136,14 +133,14 @@ export interface Load {
   trackingEvents?: TrackingEvent[];
 }
 
-export default function LoadDetailsPage({ params }: PageParams) {
+export default async function LoadDetailsPage({ params }: PageParams) {
+  const { id } = await params;
   const [isRequesting, setIsRequesting] = useState(false);
   const [load, setLoad] = useState<Load | null>(null);
   const router = useRouter();
-
   useEffect(() => {
-    getLoadDetails(params.id).then(setLoad);
-  }, [params.id]);
+    getLoadDetails(id).then(setLoad);
+  }, [id]);
 
   const statusColors = {
     draft: "bg-gray-500",
@@ -190,7 +187,8 @@ export default function LoadDetailsPage({ params }: PageParams) {
       const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://localhost:8090');
       
       // Update the load status to requested
-      await pb.collection('loads').update(params.id, {
+      const { id: loadId } = await params;
+      await pb.collection('loads').update(loadId, {
         status: 'requested'
       });
 

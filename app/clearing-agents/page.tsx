@@ -3,6 +3,7 @@ import Link from "next/link"
 import { useState, useEffect } from "react"
 import { AlertCircle, Check, ChevronDown, Clock, FileCheck, FileText, Filter, MapPin, Search, X } from "lucide-react"
 import pb from "../../lib/pocketbase"
+import { RecordModel } from 'pocketbase'
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -24,12 +25,33 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 // Loads data will be fetched from Pocketbase collection
 
+interface LoadDocument {
+  id: string;
+  name: string;
+  required: boolean;
+  submittedAt?: string;
+  notes?: string;
+  status: 'approved' | 'pending' | 'rejected' | 'not-submitted' | 'not-required';
+}
+
+interface Load extends RecordModel {
+  id: string;
+  customer: string;
+  clearanceStatus: 'pending' | 'in-progress' | 'completed' | 'delayed';
+  priority: 'high' | 'medium' | 'low';
+  origin: string;
+  destination: string;
+  currentLocation: string;
+  documents: LoadDocument[];
+  notes?: string;
+}
+
 export default function ClearingAgentPage() {
-  const [loads, setLoads] = useState([])
+  const [loads, setLoads] = useState<Load[]>([])
 
 useEffect(() => {
   const fetchLoads = async () => {
-    const response = await pb.collection('pbc_3010141149').getFullList()
+    const response = await pb.collection('pbc_3010141149').getFullList<Load>()
     setLoads(response)
   }
   fetchLoads()
@@ -209,7 +231,7 @@ useEffect(() => {
 }
 
 interface ClearanceCardProps {
-  load: any
+  load: Load
 }
 
 function ClearanceCard({ load }: ClearanceCardProps) {

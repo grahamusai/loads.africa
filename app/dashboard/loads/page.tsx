@@ -1,9 +1,7 @@
 "use client"
-
-import { useState } from "react"
+import { useState, use } from "react"
+import { Suspense } from "react"
 import pb from "@/lib/pocketbase"
-import useSWR from "swr"
-import { useRouter } from "next/navigation"
 import { Calendar, Clock, CirclePlus, MapPin, Package, Search, Truck, TruckIcon, Weight, ArrowRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -13,15 +11,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
 
-// Define fetcher function to fetch loads from PocketBase
-const fetcher = async () => {
-  const records = await pb.collection('loads').getList(1, 50, {
-    sort: '-created',
-  })
-  return records.items
+// Function to fetch loads from PocketBase
+async function getLoads() {
+  try {
+    const records = await pb.collection('loads').getList(1, 50, {
+      sort: '-created',
+    })
+    return records.items
+  } catch (error) {
+    console.error("Error fetching loads:", error)
+    throw new Error("Failed to fetch loads")
+  }
 }
-
-
 
 // Status badge color mapping
 const getStatusColor = (status: string) => {
@@ -39,15 +40,9 @@ const getStatusColor = (status: string) => {
   }
 }
 
-export default function LoadsPage() {
-  const router = useRouter()
-
-  const { data: loads, error } = useSWR("/loads", fetcher)
-  if (error) {
-    console.error("Error fetching loads:", error)
-    return <div>Error loading data</div>
-  }
-
+export default async function LoadsPage({params}: {params: Promise<{ id: string }>}) {
+  const { id } = await params;
+  const loads = await getLoads()
   const displayedLoads = loads?.slice(0, 10) || []
 
   
