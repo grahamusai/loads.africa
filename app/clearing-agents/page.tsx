@@ -281,10 +281,10 @@ function ClearanceCard({ load }: ClearanceCardProps) {
   }
 
   const pendingDocuments = load.documents.filter(
-    (doc: any) => status === "pending" || status === "not-submitted" || status === "rejected",
+    (doc: LoadDocument) => doc.status === "pending" || doc.status === "not-submitted" || doc.status === "rejected"
   ).length
 
-  const approvedDocuments = load.documents.filter((doc: any) => status === "approved").length
+  const approvedDocuments = load.documents.filter((doc: LoadDocument) => doc.status === "approved").length
 
   const totalRequiredDocuments = load.documents.filter((doc: any) => doc.required).length
 
@@ -398,16 +398,16 @@ function ClearanceCard({ load }: ClearanceCardProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {load.documents.map((doc: any) => (
                     <div key={doc.id} className="flex items-start gap-3">
-                      {documentStatusIcons[status]}
+                      {documentStatusIcons[doc.status]}
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
                           <span className="font-medium">{doc.name}</span>
-                          <Badge variant="outline" className={documentStatusColors[status]}>
-                            {status === "not-submitted"
+                          <Badge variant="outline" className={documentStatusColors[doc.status]}>
+                            {doc.status === "not-submitted"
                               ? "Not Submitted"
-                              : status === "not-required"
+                              : doc.status === "not-required"
                                 ? "Not Required"
-                                : status.charAt(0).toUpperCase() + status.slice(1)}
+                                : doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
                           </Badge>
                         </div>
                         {doc.submittedAt && (
