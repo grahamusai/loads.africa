@@ -1,4 +1,4 @@
-import { createMiddlewareClient } from '@/lib/pocketbase'
+import { createMiddlewareClient } from '@/lib/pocketbase-server'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
