@@ -51,7 +51,8 @@ export default function AuthPage() {
     password: "",
     confirmPassword: "",
     terms: false
-  })
+  });
+
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault()
     setError("")
@@ -68,16 +69,26 @@ export default function AuthPage() {
       if (authData.record.user_type !== userType) {
         throw new Error(`You don't have access to this dashboard. Please login to the ${authData.record.user_type} dashboard.`)
       }
-
+      
+      // Save auth state in cookie if remember me is checked
       if (loginData.remember) {
-        pb.authStore.save(pb.authStore.token, pb.authStore.model)
+        document.cookie = pb.authStore.exportToCookie({
+          httpOnly: false,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'Lax'
+        })
       }
       
-      router.push(getDashboardPath(userType))
+      // Get the redirect URL from the search params or use the default dashboard path
+      const redirect = searchParams.get('redirect')
+      const redirectTo = redirect ? decodeURIComponent(redirect) : getDashboardPath(userType)
+      
+      // Use replace instead of push to avoid the redirect parameter persisting in history
+      router.replace(redirectTo)
     } catch (err: any) {
       setError(err.message || "Failed to login")
     } finally {
-      setLoading(false) 
+      setLoading(false)
     }
   }
 
@@ -92,7 +103,8 @@ export default function AuthPage() {
       return
     }
 
-    try {      if (!userType) {
+    try {
+      if (!userType) {
         throw new Error("Invalid signup attempt. Please select a dashboard type.")
       }
 
@@ -107,7 +119,10 @@ export default function AuthPage() {
       
       // Login after successful signup
       await pb.collection("users").authWithPassword(signupData.email, signupData.password)
-      router.push("/dashboard")
+      
+      // FIX: Use getDashboardPath instead of hardcoded "/dashboard"
+      const redirectTo = getDashboardPath(userType)
+      router.replace(redirectTo)
     } catch (err: any) {
       setError(err.message || "Failed to create account")
     } finally {

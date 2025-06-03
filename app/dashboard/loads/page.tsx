@@ -1,9 +1,10 @@
-import pb from "@/lib/pocketbase"
+import { createServerClient } from "@/lib/pocketbase-server"
 import LoadsClient from "./LoadsClient"
 
 // Function to fetch loads from PocketBase
 async function getLoads() {
   try {
+    const pb = createServerClient()
     const records = await pb.collection('loads').getList(1, 50, {
       sort: '-created',
     })
