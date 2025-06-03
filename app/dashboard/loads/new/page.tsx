@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, Control } from "react-hook-form"
 import { z } from "zod"
 import { format } from "date-fns"
-import { CalendarIcon, ChevronRight, Loader2, MapPin, Package, DollarSign, Info } from "lucide-react"
+import { CalendarIcon, ChevronRight, Loader2, MapPin, Package, DollarSign, Info, Upload, X, FileText } from "lucide-react"
 import pb from "@/lib/pocketbase"
+import { sendLoadNotification } from '@/lib/emails';
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -59,12 +60,13 @@ const formSchema = z.object({
 
   // Step 2: Load Details
   cargo_description: z.string().min(2, { message: "Cargo description is required" }),
+  cargo_name: z.string().min(2, { message: "Cargo description is required" }),
   isHazardous: z.boolean().default(false),
   isExpedited: z.boolean().default(false),
   weight: z.string().min(1, { message: "Weight is required" }),
-  length: z.string().optional(),
-  width: z.string().optional(),
+  length: z.string().optional(),  width: z.string().optional(),
   height: z.string().optional(),
+  documents: z.array(z.custom<File>()).optional(),
   equipment_type: z.string({ required_error: "Equipment type is required" }),
   pieceCount: z.string().optional(),
   packagingType: z.string().optional(),
@@ -72,7 +74,7 @@ const formSchema = z.object({
   temperatureMax: z.string().optional(),
   
   // Step 3: Rate and Requirements
-  km: z.string().optional(),
+  distance: z.string().optional(),
   specialRequirements: z.string().optional(),
   accessorialServices: z.string().optional(),
 
@@ -111,18 +113,19 @@ export default function NewLoadPage() {
       pickupTime: "",
       deliveryTime: "",
       cargo_description: "",
+      cargo_name: "",
       isHazardous: false,
       isExpedited: false,
-      weight: "",
-      length: "",
+      weight: "",      length: "",
       width: "",
       height: "",
+      documents: [],
       equipment_type: "",
       pieceCount: "",
       packagingType: "",
       temperatureMin: "",
       temperatureMax: "",
-      km: "",
+      distance: "",
       specialRequirements: "",
       accessorialServices: "",
       companyName: "",
@@ -131,33 +134,25 @@ export default function NewLoadPage() {
       visibility: "public",
     },
   })
-
   // Get form values for preview
   const formValues = form.watch()
-
-  // Handle form submission
+    // Handle form submission
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
 
     try {
-      // Format the data according to PocketBase schema
+      // Create FormData instance for file upload
+      const formData = new FormData();      // Format the data according to PocketBase schema
       const formattedData = {
         reference_number: data.reference_number || generateReferenceNumber(),
-        origin: data.origin,
-        origin_address: data.originAddress,
-        destination: data.destination,
-        destination_address: data.destinationAddress,
-        pickup_date: data.pickupDate.toISOString(),
-        pickup_time: data.pickupTime,
-        delivery_date: data.deliveryDate.toISOString(),
-        delivery_time: data.deliveryTime,
-        equipment_type: data.equipment_type,
         status: "draft",
-        visibility: data.visibility,
-        km: data.km ? parseFloat(data.km) : null,
+        visibility: data.visibility || "public",
+        currency: "ZAR", // Default currency
         isHazardous: data.isHazardous || false,
         isExpedited: data.isExpedited || false,
-        completedAt: null, // Will be set when the load is completed
+        assignedAt: null,
+        completedAt: null,
+        cargo_name: data.cargo_name,
         cargo_description: data.cargo_description,
         weight: data.weight ? parseFloat(data.weight) : null,
         length: data.length ? parseFloat(data.length) : null,
@@ -169,11 +164,47 @@ export default function NewLoadPage() {
         accessorialServices: data.accessorialServices || null,
         temperatureMin: data.temperatureMin ? parseFloat(data.temperatureMin) : null,
         temperatureMax: data.temperatureMax ? parseFloat(data.temperatureMax) : null,
-        company_name: data.companyName,
+        equipment_type: data.equipment_type,
+        origin: data.origin,
+        destination: data.destination,
+        pickupDate: data.pickupDate ? new Date(data.pickupDate).toISOString() : null,
+        deliveryDate: data.deliveryDate ? new Date(data.deliveryDate).toISOString() : null,
+        distance: data.distance ? parseFloat(data.distance) : null,
+        paymentAmount: 0, // Default value since it's required
+        current_location: data.origin, // Initially set to origin
+        driver_name: null,
       };
 
-      // Create the record in PocketBase
-      await pb.collection('loads').create(formattedData);
+      // Append all other fields to FormData
+      Object.entries(formattedData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          formData.append(key, value.toString());
+        }
+      });
+
+      // Append document files if any
+      if (data.documents && data.documents.length > 0) {
+        Array.from(data.documents).forEach((file: File) => {
+          formData.append('documents', file);
+        });
+      }      // Create the record in PocketBase
+      const createdLoad = await pb.collection('loads').create(formData);
+
+      // Fetch all carrier users
+      const carriers = await pb.collection('users').getFullList({
+        filter: 'user_type = "carrier" && isActive = true'
+      });
+
+      // Send email notifications to all carriers
+      for (const carrier of carriers) {
+        if (carrier.emailVisibility && carrier.verified) {
+          await sendLoadNotification(
+            carrier.email,
+            `${carrier.first_name} ${carrier.last_name}`,
+            createdLoad
+          );
+        }
+      }
       
       // Redirect to loads page after successful submission
       router.push("/dashboard/loads?success=true");
@@ -211,6 +242,7 @@ export default function NewLoadPage() {
       case 2:
         fieldsToValidate = [
           "cargo_description", 
+          "cargo_name", 
           "weight", 
           "equipment_type",
         ]
@@ -480,8 +512,34 @@ export default function NewLoadPage() {
                     <CardTitle>Cargo Details</CardTitle>
                     <CardDescription>Describe the cargo and equipment requirements</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid gap-4 md:grid-cols-2">
+                  <CardContent className="space-y-6">                    <div className="grid gap-4 md:grid-cols-2">
+                      <FormField
+                        control={form.control as unknown as Control<FormValues>}
+                        name="cargo_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Cargo Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g Maize" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control as unknown as Control<FormValues>}
+                        name="pieceCount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Number of Pieces</FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="e.g. 10" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                       <FormField
                         control={form.control as unknown as Control<FormValues>}
                         name="cargo_description"
@@ -489,14 +547,12 @@ export default function NewLoadPage() {
                           <FormItem>
                             <FormLabel>Cargo Description</FormLabel>
                             <FormControl>
-                              <Input placeholder="e.g. Packaged goods, Pallets, etc." {...field} />
+                              <Textarea placeholder="e.g. Packaged goods, Pallets, etc." {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
-                      />
-
-                      <FormField
+                      />                      <FormField
                         control={form.control as unknown as Control<FormValues>}
                         name="isHazardous"
                         render={({ field }) => (
@@ -519,14 +575,61 @@ export default function NewLoadPage() {
 
                       <FormField
                         control={form.control as unknown as Control<FormValues>}
+                        name="isExpedited"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Expedited Delivery</FormLabel>
+                              <FormDescription>
+                                Check this box if this is an expedited shipment
+                              </FormDescription>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control as unknown as Control<FormValues>}
+                        name="packagingType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Packaging Type</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select packaging type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="pallets">Pallets</SelectItem>
+                                <SelectItem value="boxes">Boxes</SelectItem>
+                                <SelectItem value="crates">Crates</SelectItem>
+                                <SelectItem value="drums">Drums</SelectItem>
+                                <SelectItem value="bags">Bags</SelectItem>
+                                <SelectItem value="bulk">Bulk</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control as unknown as Control<FormValues>}
                         name="weight"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Weight (lbs)</FormLabel>
+                            <FormLabel>Weight (kgs)</FormLabel>
                             <FormControl>
                               <Input type="text" placeholder="e.g. 15000" {...field} />
                             </FormControl>
-                            <FormDescription>Total weight in pounds</FormDescription>
+                            <FormDescription>Total weight in killograms</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -539,7 +642,7 @@ export default function NewLoadPage() {
                         name="length"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Length (in)</FormLabel>
+                            <FormLabel>Length (cm)</FormLabel>
                             <FormControl>
                               <Input type="text" placeholder="e.g. 48" {...field} />
                             </FormControl>
@@ -553,7 +656,7 @@ export default function NewLoadPage() {
                         name="width"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Width (in)</FormLabel>
+                            <FormLabel>Width (cm)</FormLabel>
                             <FormControl>
                               <Input type="text" placeholder="e.g. 40" {...field} />
                             </FormControl>
@@ -567,7 +670,7 @@ export default function NewLoadPage() {
                         name="height"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Height (in)</FormLabel>
+                            <FormLabel>Height (cm)</FormLabel>
                             <FormControl>
                               <Input type="text" placeholder="e.g. 48" {...field} />
                             </FormControl>
@@ -577,7 +680,67 @@ export default function NewLoadPage() {
                       />
                     </div>
 
-                    <FormField
+                    <FormField 
+                      control={form.control as unknown as Control<FormValues>}
+                      name="documents"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Documents</FormLabel>
+                          <FormControl>
+                            <div className="space-y-4">
+                              <div className="flex flex-col gap-2">
+                                <Input
+                                  type="file"
+                                  multiple
+                                  onChange={(e) => {
+                                    const files = Array.from(e.target.files || []);
+                                    field.onChange(files);
+                                  }}
+                                  className="cursor-pointer"
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                />
+                                <p className="text-sm text-muted-foreground">
+                                  Accepted file types: PDF, DOC, DOCX, JPG, JPEG, PNG
+                                </p>
+                              </div>
+                              {field.value && field.value.length > 0 && (
+                                <div className="space-y-2">
+                                  {Array.from(field.value).map((file: File, index: number) => (
+                                    <div
+                                      key={index}
+                                      className="flex items-center justify-between gap-2 rounded-md border p-2"
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <FileText className="h-4 w-4 text-muted-foreground" />
+                                        <span className="text-sm">{file.name}</span>
+                                        <span className="text-sm text-muted-foreground">
+                                          ({Math.round(file.size / 1024)} KB)
+                                        </span>
+                                      </div>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                          const updatedFiles = field.value ? 
+                                            Array.from(field.value).filter((_: File, i: number) => i !== index) :
+                                            [];
+                                          field.onChange(updatedFiles);
+                                        }}
+                                      >
+                                        <X className="h-4 w-4" />
+                                        <span className="sr-only">Remove file</span>
+                                      </Button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />                    <FormField
                       control={form.control as unknown as Control<FormValues>}
                       name="equipment_type"
                       render={({ field }) => (
@@ -597,6 +760,70 @@ export default function NewLoadPage() {
                               ))}
                             </SelectContent>
                           </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <FormField
+                        control={form.control as unknown as Control<FormValues>}
+                        name="temperatureMin"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Minimum Temperature (°C)</FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="e.g. 2" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control as unknown as Control<FormValues>}
+                        name="temperatureMax"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Maximum Temperature (°C)</FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="e.g. 8" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control as unknown as Control<FormValues>}
+                      name="specialRequirements"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Special Requirements</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Enter any special handling requirements or instructions"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control as unknown as Control<FormValues>}
+                      name="accessorialServices"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Accessorial Services</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="List any additional services required (e.g., liftgate, inside delivery)"
+                              {...field}
+                            />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -629,7 +856,21 @@ export default function NewLoadPage() {
                           <FormItem>
                             <FormLabel>Company Name</FormLabel>
                             <FormControl>
-                              <Input placeholder="Your company name" {...field} />
+                              <Input placeholder="Enter your company name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control as unknown as Control<FormValues>}
+                        name="distance"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Distance (km)</FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="e.g. 500" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -641,10 +882,13 @@ export default function NewLoadPage() {
                         name="reference_number"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Reference Number (Optional)</FormLabel>
+                            <FormLabel>Reference Number</FormLabel>
                             <FormControl>
-                              <Input placeholder="Internal reference number" {...field} />
+                              <Input placeholder="Load reference number" {...field} />
                             </FormControl>
+                            <FormDescription>
+                              Leave blank to auto-generate
+                            </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -656,7 +900,7 @@ export default function NewLoadPage() {
                       name="visibility"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Visibility</FormLabel>
+                          <FormLabel>Load Visibility</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
@@ -669,7 +913,7 @@ export default function NewLoadPage() {
                             </SelectContent>
                           </Select>
                           <FormDescription>
-                            Public loads are visible to all carriers, private loads are only visible to invited carriers
+                            Public loads are visible to all carriers
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -744,6 +988,10 @@ export default function NewLoadPage() {
 
                       <div className="grid gap-4 md:grid-cols-2">
                         <div>
+                          <p className="text-sm font-medium text-muted-foreground">Cargo Name</p>
+                          <p>{formValues.cargo_name || "Not specified"}</p>
+                        </div>
+                        <div>
                           <p className="text-sm font-medium text-muted-foreground">Cargo Description</p>
                           <p>{formValues.cargo_description || "Not specified"}</p>
                         </div>
@@ -755,7 +1003,7 @@ export default function NewLoadPage() {
 
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Weight</p>
-                          <p>{formValues.weight ? `${formValues.weight} lbs` : "Not specified"}</p>
+                          <p>{formValues.weight ? `${formValues.weight} kgs` : "Not specified"}</p>
                         </div>
 
                         <div>
@@ -771,9 +1019,25 @@ export default function NewLoadPage() {
                           <p className="text-sm font-medium text-muted-foreground">Equipment Type</p>
                           <p>
                             {equipmentTypes.find((type) => type.value === formValues.equipment_type)?.label ||
-                              "Not specified"}
-                          </p>
+                              "Not specified"}                          </p>
                         </div>
+
+                        {formValues.documents && formValues.documents.length > 0 && (
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Documents</p>
+                            <div className="mt-2 space-y-2">
+                              {Array.from(formValues.documents).map((file: File, index: number) => (
+                                <div key={index} className="flex items-center gap-2">
+                                  <FileText className="h-4 w-4 text-muted-foreground" />
+                                  <span className="text-sm">{file.name}</span>
+                                  <span className="text-sm text-muted-foreground">
+                                    ({Math.round(file.size / 1024)} KB)
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 

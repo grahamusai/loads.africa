@@ -50,7 +50,7 @@ const Benefits = () => {
             className="text-3xl md:text-4xl font-bold mb-4"
           >
             Benefits for{" "}
-            <span className="text-yellow-500">Every Stakeholder</span>
+            <span className="text-teal-500">Every Stakeholder</span>
           </motion.h2>
           <motion.p
             variants={fadeIn}
@@ -86,7 +86,7 @@ const Benefits = () => {
               variants={fadeIn}
               className="text-2xl font-bold mb-6 flex items-center"
             >
-              <span className="bg-yellow-500 text-black rounded-full w-10 h-10 flex items-center justify-center mr-3">
+              <span className="bg-teal-500 text-black rounded-full w-10 h-10 flex items-center justify-center mr-3">
                 1
               </span>
               For Truck Owners & Fleet Managers
@@ -115,7 +115,7 @@ const Benefits = () => {
                   }}
                   className="flex items-start"
                 >
-                  <div className="bg-yellow-500 rounded-full p-1 mr-3 mt-1">
+                  <div className="bg-teal-500 rounded-full p-1 mr-3 mt-1">
                     <ChevronRight className="h-4 w-4 text-black" />
                   </div>
                   <p className="text-gray-300">{benefit}</p>
@@ -137,7 +137,7 @@ const Benefits = () => {
               variants={fadeIn}
               className="text-2xl font-bold mb-6 flex items-center"
             >
-              <span className="bg-yellow-500 text-black rounded-full w-10 h-10 flex items-center justify-center mr-3">
+              <span className="bg-teal-500 text-black rounded-full w-10 h-10 flex items-center justify-center mr-3">
                 2
               </span>
               For Carriers & Drivers
@@ -166,7 +166,7 @@ const Benefits = () => {
                   }}
                   className="flex items-start"
                 >
-                  <div className="bg-yellow-500 rounded-full p-1 mr-3 mt-1">
+                  <div className="bg-teal-500 rounded-full p-1 mr-3 mt-1">
                     <ChevronRight className="h-4 w-4 text-black" />
                   </div>
                   <p className="text-gray-300">{benefit}</p>

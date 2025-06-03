@@ -231,9 +231,9 @@ export default function DriversPage() {
     <div className="container mx-auto p-4 md:p-6">
       <div className="mb-6 flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold md:text-3xl">Driver Management</h1>
+          <h1 className="text-2xl font-bold md:text-3xl text-[#1b858f]">Driver Management</h1>
           <Link href="/dashboard/drivers/new">
-            <Button className="cursor-pointer" >
+            <Button className="bg-[#1b858f] cursor-pointer" >
               <Plus className="mr-2 h-4 w-4" />
               Add Driver
             </Button>

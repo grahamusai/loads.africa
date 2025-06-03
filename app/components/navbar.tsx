@@ -25,34 +25,31 @@ const Navbar = () => {
       }`}
     >
       <div className="text-white container mx-auto px-4 flex justify-between items-center">
-        <div className="flex items-center">
-          <TruckIcon className="h-8 w-8 text-yellow-500 mr-2" />
-          <span className="text-xl font-bold">TruckFlow</span>
-        </div>
+        <h2>Loads africa</h2>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex space-x-8">
           <Link
             href="#features"
-            className="hover:text-yellow-500 transition-colors"
+            className="hover:text-teal-500 transition-colors"
           >
             Features
           </Link>
           <Link
             href="#benefits"
-            className="hover:text-yellow-500 transition-colors"
+            className="hover:text-teal-500 transition-colors"
           >
             Benefits
           </Link>
           <Link
             href="#testimonials"
-            className="hover:text-yellow-500 transition-colors"
+            className="hover:text-teal-500 transition-colors"
           >
             Testimonials
           </Link>
           <Link
             href="#pricing"
-            className="hover:text-yellow-500 transition-colors"
+            className="hover:text-teal-500 transition-colors"
           >
             Pricing
           </Link>
@@ -60,8 +57,8 @@ const Navbar = () => {
 
         <div className="hidden md:flex space-x-4">
           <Link
-          href={"/auth"}
-            className="border-yellow-500 text-yellow-500  hover:text-yellow-700"
+          href={"/login"}
+            className="border-teal-500 border-1 px-3 py-2 text-teal-500  hover:text-teal-700"
           >
             Get Started
           </Link>
@@ -92,28 +89,28 @@ const Navbar = () => {
           <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
             <Link
               href="#features"
-              className="py-2 hover:text-yellow-500 transition-colors"
+              className="py-2 hover:text-teal-500 text-white transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
               Features
             </Link>
             <Link
               href="#benefits"
-              className="py-2 hover:text-yellow-500 transition-colors"
+              className="py-2 hover:text-teal-500 text-white transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
               Benefits
             </Link>
             <Link
               href="#testimonials"
-              className="py-2 hover:text-yellow-500 transition-colors"
+              className="py-2 hover:text-teal-500 text-white transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
               Testimonials
             </Link>
             <Link
               href="#pricing"
-              className="py-2 hover:text-yellow-500 transition-colors"
+              className="py-2 hover:text-teal-500 text-white transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
               Pricing
@@ -121,11 +118,11 @@ const Navbar = () => {
             <div className="flex flex-col space-y-2 pt-2">
               <Button
                 variant="outline"
-                className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black w-full"
+                className="border-teal-500 text-teal-500  hover:bg-orange-500 hover:text-black w-full"
               >
                 Log In
               </Button>
-              <Button className="bg-yellow-500 text-black hover:bg-yellow-600 w-full">
+              <Button className="bg-teal-500 text-black hover:bg-teal-600 w-full">
                 Get Started
               </Button>
             </div>

@@ -38,7 +38,7 @@ const Cta = () => {
   return (
     <section className="py-20 text-white bg-black relative overflow-hidden">
     <div className="absolute inset-0 z-0">
-      <div className="absolute inset-0 bg-yellow-500/10"></div>
+      <div className="absolute inset-0 bg-teal-500/10"></div>
     </div>
     
     <div className="container mx-auto px-4 relative z-10">
@@ -53,7 +53,7 @@ const Cta = () => {
           variants={fadeIn}
           className="text-3xl md:text-4xl font-bold mb-6"
         >
-          Ready to Transform Your <span className="text-yellow-500">Trucking Business</span>?
+          Ready to Transform Your <span className="text-teal-500">Trucking Business</span>?
         </motion.h2>
         
         <motion.p 
@@ -67,7 +67,7 @@ const Cta = () => {
           variants={fadeIn}
           className="flex flex-col sm:flex-row justify-center gap-4"
         >
-          <Button className="bg-yellow-500 text-black hover:bg-yellow-600 text-lg px-8 py-6">
+          <Button className="bg-teal-500 text-black hover:bg-teal-600 text-lg px-8 py-6">
             Start Your Free Trial
           </Button>
           <Button variant="outline" className="border-white text-black hover:bg-white/10 text-lg px-8 py-6">

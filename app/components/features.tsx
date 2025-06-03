@@ -60,7 +60,7 @@ const features = () => {
           variants={fadeIn}
           className="text-3xl md:text-4xl font-bold mb-4 text-white"
         >
-          Powerful <span className="text-yellow-500">Features</span> for Modern Trucking
+          Powerful <span className="text-teal-500">Features</span> for Modern Trucking
         </motion.h2>
         <motion.p 
           variants={fadeIn}
@@ -73,32 +73,32 @@ const features = () => {
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         {[
           {
-            icon: <TruckIcon className="h-10 w-10 text-yellow-500" />,
+            icon: <TruckIcon className="h-10 w-10 text-teal-500" />,
             title: "Fleet Management",
             description: "Track your entire fleet in real-time. Monitor vehicle status, maintenance schedules, and driver assignments all in one place."
           },
           {
-            icon: <BarChart3Icon className="h-10 w-10 text-yellow-500" />,
+            icon: <BarChart3Icon className="h-10 w-10 text-teal-500" />,
             title: "Performance Analytics",
             description: "Gain insights into your business with comprehensive analytics. Identify trends and make data-driven decisions."
           },
           {
-            icon: <ClockIcon className="h-10 w-10 text-yellow-500" />,
+            icon: <ClockIcon className="h-10 w-10 text-teal-500" />,
             title: "Route Optimization",
             description: "Save time and fuel with intelligent route planning. Automatically calculate the most efficient routes for your drivers."
           },
           {
-            icon: <DollarSignIcon className="h-10 w-10 text-yellow-500" />,
+            icon: <DollarSignIcon className="h-10 w-10 text-teal-500" />,
             title: "Expense Tracking",
             description: "Keep track of all expenses including fuel, maintenance, and driver payments. Generate detailed financial reports."
           },
           {
-            icon: <ShieldCheckIcon className="h-10 w-10 text-yellow-500" />,
+            icon: <ShieldCheckIcon className="h-10 w-10 text-teal-500" />,
             title: "Compliance Management",
             description: "Stay compliant with industry regulations. Automated alerts and documentation help you avoid penalties."
           },
           {
-            icon: <TruckIcon className="h-10 w-10 text-yellow-500" />,
+            icon: <TruckIcon className="h-10 w-10 text-teal-500" />,
             title: "Load Matching",
             description: "Find the perfect loads for your fleet. Our matching algorithm connects you with shippers that fit your routes."
           }

@@ -6,17 +6,17 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-[#1b858f]">Dashboard</h1>
         <p className="text-muted-foreground mt-2">Welcome to your dashboard overview.</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <div className="p-6 bg-card rounded-lg border border-border">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium">Total Sites</h3>
+            <h3 className="text-lg font-medium">Total Loads Posted </h3>
             <Server className="text-muted-foreground" />
           </div>
-          <p className="text-3xl font-bold mt-2">12</p>
+          <p className="text-3xl font-bold mt-2">36</p>
           <div className="flex items-center gap-1 mt-4 text-sm text-muted-foreground">
             <ArrowUpRight className="size-4" />
             <span>4% from last month</span>
@@ -25,10 +25,10 @@ const Dashboard = () => {
 
         <div className="p-6 bg-card rounded-lg border border-border">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium">Active Users</h3>
+            <h3 className="text-lg font-medium">Total Loads Under Review</h3>
             <Users className="text-muted-foreground" />
           </div>
-          <p className="text-3xl font-bold mt-2">891</p>
+          <p className="text-3xl font-bold mt-2">7</p>
           <div className="flex items-center gap-1 mt-4 text-sm text-muted-foreground">
             <ArrowUpRight className="size-4" />
             <span>12% from last month</span>
@@ -36,10 +36,10 @@ const Dashboard = () => {
         </div>
         <div className="p-6 bg-card rounded-lg border border-border">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium">Total Revenue</h3>
+            <h3 className="text-lg font-medium">Approved Loads</h3>
             <DollarSign  className="text-muted-foreground" />
           </div>
-          <p className="text-3xl font-bold mt-2">$23,000</p>
+          <p className="text-3xl font-bold mt-2">23</p>
           <div className="flex items-center gap-1 mt-4 text-sm text-muted-foreground">
             <ArrowUpRight className="size-4" />
             <span>12% from last month</span>

@@ -10,8 +10,8 @@ export default function Sidebar() {
 
   return (
     <aside className="w-64 bg-sidebar border-r border-sidebar-border">
-      <div className="p-6">
-        <h1 className="text-xl font-bold text-sidebar-foreground">Postloads</h1>
+       <div className="p-6">
+        <img src="/images/logo.png" alt="" />
       </div>
       
       <nav className="px-3 py-2">
@@ -22,7 +22,7 @@ export default function Sidebar() {
             className={cn(
               "w-full justify-start font-semibold text-lg ",
               pathname === "/dashboard"
-                ? "bg-[#1C2831] text-white hover:bg-[#1C2831] hover:text-white font-semibold"
+                ? "bg-[#1b858f] text-white hover:bg-[#1b858f] hover:text-white font-semibold"
                 : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >
@@ -38,7 +38,7 @@ export default function Sidebar() {
             className={cn(
               "w-full justify-start font-semibold text-lg ",
               pathname === "/dashboard/loads"
-                ? "bg-[#1C2831] text-white hover:bg-[#1C2831] hover:text-white font-semibold"
+                ? "bg-[#1b858f] text-white hover:bg-[#1b858f] hover:text-white font-semibold"
                 : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >
@@ -47,47 +47,19 @@ export default function Sidebar() {
               Loads
             </Link>
           </Button>
+         
+          
           <Button
             asChild
             variant="ghost"
             className={cn(
               "w-full justify-start font-semibold text-lg ",
-              pathname === "/dashboard/trucks"
-                ? "bg-[#1C2831] text-white hover:bg-[#1C2831] hover:text-white font-semibold"
+              pathname === "/dashboard/tracking"
+                ? "bg-[#1b858f] text-white hover:bg-[#1b858f] hover:text-white font-semibold"
                 : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >
-            <Link href="/dashboard/trucks">
-              <Truck className="mr-2" />
-              Trucks
-            </Link>
-          </Button>
-          <Button
-            asChild
-            variant="ghost"
-            className={cn(
-              "w-full justify-start font-semibold text-lg ",
-              pathname === "/dashboard/drivers"
-                ? "bg-[#1C2831] text-white hover:bg-[#1C2831] hover:text-white font-semibold"
-                : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            )}
-          >
-            <Link href="/dashboard/drivers">
-              <Users className="mr-2" />
-              Drivers
-            </Link>
-          </Button>
-          <Button
-            asChild
-            variant="ghost"
-            className={cn(
-              "w-full justify-start font-semibold text-lg ",
-              pathname === "/dashboard/sites"
-                ? "bg-[#1C2831] text-white hover:bg-[#1C2831] hover:text-white font-semibold"
-                : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            )}
-          >
-            <Link href="/dashboard/sites">
+            <Link href="/dashboard/tracking">
               <MapPin className="mr-2" />
               Tracking
             </Link>
@@ -99,7 +71,7 @@ export default function Sidebar() {
             className={cn(
               "w-full justify-start font-semibold text-lg ",
               pathname === "/dashboard/settings"
-                ? "bg-[#1C2831] text-white hover:bg-[#1C2831] hover:text-white font-semibold"
+                ? "bg-[#1b858f] text-white hover:bg-[#1b858f] hover:text-white font-semibold"
                 : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >
