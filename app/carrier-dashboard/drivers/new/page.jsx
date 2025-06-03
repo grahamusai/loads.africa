@@ -1,5 +1,5 @@
 "use client";
-import pb from "../../../../lib/pocketbase";
+import getPocketBaseClient from "@/lib/pocketbase-client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -117,7 +117,11 @@ export default function NewDriverPage() {
         }
       });
   
-      // Create the record in PocketBase
+    // Create the record in PocketBase
+      const pb = getPocketBaseClient();
+      if (!pb) {
+        throw new Error("PocketBase client not initialized");
+      }
       await pb.collection("drivers").create(formData);
       
       // Redirect to drivers list on success

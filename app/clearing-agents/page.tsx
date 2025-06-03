@@ -2,7 +2,7 @@
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import { AlertCircle, Check, ChevronDown, Clock, FileCheck, FileText, Filter, MapPin, Search, X } from "lucide-react"
-import pb from "../../lib/pocketbase"
+import getPocketBaseClient from "@/lib/pocketbase-client"
 import { RecordModel } from 'pocketbase'
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -51,8 +51,13 @@ export default function ClearingAgentPage() {
 
 useEffect(() => {
   const fetchLoads = async () => {
-    const response = await pb.collection('pbc_3010141149').getFullList<Load>()
-    setLoads(response)
+    const pb = getPocketBaseClient();
+    if (!pb) {
+      console.error("PocketBase client not initialized");
+      return;
+    }
+    const response = await pb.collection('pbc_3010141149').getFullList<Load>();
+    setLoads(response);
   }
   fetchLoads()
 }, [])

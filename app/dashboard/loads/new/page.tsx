@@ -7,7 +7,7 @@ import { useForm, Control } from "react-hook-form"
 import { z } from "zod"
 import { format } from "date-fns"
 import { CalendarIcon, ChevronRight, Loader2, MapPin, Package, DollarSign, Info, Upload, X, FileText } from "lucide-react"
-import pb from "@/lib/pocketbase"
+import { getPocketBaseClient } from "@/lib/pocketbase-client"
 import { sendLoadNotification } from '@/lib/emails';
 
 import { Button } from "@/components/ui/button"
@@ -78,21 +78,14 @@ const formSchema = z.object({
   specialRequirements: z.string().optional(),
   accessorialServices: z.string().optional(),
 
+
   // Step 4: Company Information
   companyName: z.string().min(2, { message: "Company name is required" }),
   reference_number: z.string().optional(),
   status: z.enum(["draft", "active", "completed", "cancelled"]).default("draft"),
   visibility: z.enum(["public", "private"]).default("public"),
-})
+})  
 
-
-// Check is user is authenicated
-if (!pb.authStore.isValid) {
-  console.log("User is not authenticated");
-  // Optionally redirect to login or show an error
-} else {
-  console.log("User is authenticated", pb.authStore.model?.id);
-}
 
 type FormValues = z.infer<typeof formSchema>
 
@@ -136,85 +129,87 @@ export default function NewLoadPage() {
   })
   // Get form values for preview
   const formValues = form.watch()
-    // Handle form submission
-  const onSubmit = async (data: FormValues) => {
-    setIsSubmitting(true);
+    // Handle form submission  const onSubmit = async (data: FormValues) => {
+    const onSubmit = async (data: FormValues) => {
+      setIsSubmitting(true);
+      setFormError(null);
 
-    try {
-      // Create FormData instance for file upload
-      const formData = new FormData();      // Format the data according to PocketBase schema
-      const formattedData = {
-        reference_number: data.reference_number || generateReferenceNumber(),
-        status: "draft",
-        visibility: data.visibility || "public",
-        currency: "ZAR", // Default currency
-        isHazardous: data.isHazardous || false,
-        isExpedited: data.isExpedited || false,
-        assignedAt: null,
-        completedAt: null,
-        cargo_name: data.cargo_name,
-        cargo_description: data.cargo_description,
-        weight: data.weight ? parseFloat(data.weight) : null,
-        length: data.length ? parseFloat(data.length) : null,
-        width: data.width ? parseFloat(data.width) : null,
-        height: data.height ? parseFloat(data.height) : null,
-        pieceCount: data.pieceCount ? parseInt(data.pieceCount) : null,
-        packagingType: data.packagingType || null,
-        specialRequirements: data.specialRequirements || null,
-        accessorialServices: data.accessorialServices || null,
-        temperatureMin: data.temperatureMin ? parseFloat(data.temperatureMin) : null,
-        temperatureMax: data.temperatureMax ? parseFloat(data.temperatureMax) : null,
-        equipment_type: data.equipment_type,
-        origin: data.origin,
-        destination: data.destination,
-        pickupDate: data.pickupDate ? new Date(data.pickupDate).toISOString() : null,
-        deliveryDate: data.deliveryDate ? new Date(data.deliveryDate).toISOString() : null,
-        distance: data.distance ? parseFloat(data.distance) : null,
-        paymentAmount: 0, // Default value since it's required
-        current_location: data.origin, // Initially set to origin
-        driver_name: null,
-      };
-
-      // Append all other fields to FormData
-      Object.entries(formattedData).forEach(([key, value]) => {
-        if (value !== null && value !== undefined) {
-          formData.append(key, value.toString());
+      try {
+        const pb = getPocketBaseClient();
+        if (!pb) {
+          setFormError("Failed to connect to the database. Please try again.");
+          return;
         }
-      });
 
-      // Append document files if any
-      if (data.documents && data.documents.length > 0) {
-        Array.from(data.documents).forEach((file: File) => {
-          formData.append('documents', file);
+        const formData = new FormData();
+        const formattedData = {
+          reference_number: data.reference_number || generateReferenceNumber(),
+          status: "draft",
+          visibility: data.visibility || "public",
+          currency: "ZAR",
+          isHazardous: data.isHazardous || false,
+          isExpedited: data.isExpedited || false,
+          assignedAt: null,
+          completedAt: null,
+          cargo_name: data.cargo_name,
+          cargo_description: data.cargo_description,
+          weight: data.weight ? parseFloat(data.weight) : null,
+          length: data.length ? parseFloat(data.length) : null,
+          width: data.width ? parseFloat(data.width) : null,
+          height: data.height ? parseFloat(data.height) : null,
+          pieceCount: data.pieceCount ? parseInt(data.pieceCount) : null,
+          packagingType: data.packagingType || null,
+          specialRequirements: data.specialRequirements || null,
+          accessorialServices: data.accessorialServices || null,
+          temperatureMin: data.temperatureMin ? parseFloat(data.temperatureMin) : null,
+          temperatureMax: data.temperatureMax ? parseFloat(data.temperatureMax) : null,
+          equipment_type: data.equipment_type,
+          origin: data.origin,
+          destination: data.destination,
+          pickupDate: data.pickupDate ? new Date(data.pickupDate).toISOString() : null,
+          deliveryDate: data.deliveryDate ? new Date(data.deliveryDate).toISOString() : null,
+          distance: data.distance ? parseFloat(data.distance) : null,
+          paymentAmount: 0,
+          current_location: data.origin,
+          driver_name: null,
+        };
+
+        Object.entries(formattedData).forEach(([key, value]) => {
+          if (value !== null && value !== undefined) {
+            formData.append(key, value.toString());
+          }
         });
-      }      // Create the record in PocketBase
-      const createdLoad = await pb.collection('loads').create(formData);
 
-      // Fetch all carrier users
-      const carriers = await pb.collection('users').getFullList({
-        filter: 'user_type = "carrier" && isActive = true'
-      });
-
-      // Send email notifications to all carriers
-      for (const carrier of carriers) {
-        if (carrier.emailVisibility && carrier.verified) {
-          await sendLoadNotification(
-            carrier.email,
-            `${carrier.first_name} ${carrier.last_name}`,
-            createdLoad
-          );
+        if (data.documents && data.documents.length > 0) {
+          Array.from(data.documents).forEach((file: File) => {
+            formData.append('documents', file);
+          });
         }
+
+        const createdLoad = await pb.collection('loads').create(formData);
+
+        const carriers = await pb.collection('users').getFullList({
+          filter: 'user_type = "carrier" && isActive = true'
+        });
+
+        for (const carrier of carriers) {
+          if (carrier.emailVisibility && carrier.verified) {
+            await sendLoadNotification(
+              carrier.email,
+              `${carrier.first_name} ${carrier.last_name}`,
+              createdLoad
+            );
+          }
+        }
+        
+        router.push("/dashboard/loads?success=true");
+      } catch (error) {
+        console.error("Error submitting form:", error);
+        setFormError("Failed to create load. Please try again.");
+      } finally {
+        setIsSubmitting(false);
       }
-      
-      // Redirect to loads page after successful submission
-      router.push("/dashboard/loads?success=true");
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      setFormError("Failed to create load. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    };
 
   // Helper function to generate a reference number
   const generateReferenceNumber = () => {
@@ -527,6 +522,7 @@ export default function NewLoadPage() {
                         )}
                       />
                       
+
                       <FormField
                         control={form.control as unknown as Control<FormValues>}
                         name="pieceCount"
@@ -733,6 +729,7 @@ export default function NewLoadPage() {
                                       </Button>
                                     </div>
                                   ))}
+
                                 </div>
                               )}
                             </div>

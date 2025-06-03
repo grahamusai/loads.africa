@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { format } from "date-fns"
 import { CalendarIcon, Loader2, TruckIcon, FileText, Gauge, PenToolIcon as Tool } from "lucide-react"
-import pb from "@/lib/pocketbase"
+import getPocketBaseClient from "@/lib/pocketbase-client";
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"

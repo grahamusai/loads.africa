@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import pb from "@/lib/pocketbase"
+import getPocketBaseClient from "@/lib/pocketbase-client"
 import useSWR from "swr"
 import { useRouter } from "next/navigation"
 import { Calendar, Clock, Settings, MapPin, Package, Search, Truck, TruckIcon, Weight, ArrowRight } from "lucide-react"
@@ -72,13 +72,15 @@ interface Load {
   rate: string
 }
 
+const pb = getPocketBaseClient();
+
 const fetcher = async (): Promise<Load[]> => {
   // Get the current user's ID
-  const userId = pb.authStore.model?.id
-  if (!userId) {
+  if (!pb || !pb.authStore.model?.id) {
     throw new Error("User not authenticated")
   }
-  
+  const userId = pb.authStore.model.id
+
   // Fetch loads where the carrier field matches the current user's ID
   const records = await pb.collection('loads').getList(1, 50, {
     sort: '-created',
@@ -125,6 +127,9 @@ export default function LoadsPage() {
         current_location: updateForm.current_location || null,
         driver_name: updateForm.driver_name || null,
         updated: new Date().toISOString()
+      }
+      if (!pb) {
+        throw new Error("PocketBase client not initialized")
       }
       await pb.collection('loads').update(selectedLoad.id, updateData)
       setIsUpdateDialogOpen(false)

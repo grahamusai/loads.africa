@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { EyeIcon, EyeOffIcon, GithubIcon, ChromeIcon as GoogleIcon } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import pb from "@/lib/pocketbase"
+import getPocketBaseClient from "@/lib/pocketbase-client"
 
 export default function AuthPage() {
   const router = useRouter()
@@ -52,13 +52,16 @@ export default function AuthPage() {
     confirmPassword: "",
     terms: false
   });
-
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault()
     setError("")
     setLoading(true)
 
     try {
+      const pb = getPocketBaseClient()
+      if (!pb) {
+        throw new Error("Authentication client not available")
+      }
       const authData = await pb.collection("users").authWithPassword(loginData.email, loginData.password)
       
       // Check if user type matches the requested dashboard type
@@ -91,7 +94,6 @@ export default function AuthPage() {
       setLoading(false)
     }
   }
-
   const handleSignup = async (e: FormEvent) => {
     e.preventDefault()
     setError("")
@@ -108,6 +110,11 @@ export default function AuthPage() {
         throw new Error("Invalid signup attempt. Please select a dashboard type.")
       }
 
+      const pb = getPocketBaseClient()
+      if (!pb) {
+        throw new Error("Authentication client not available")
+      }
+
       await pb.collection("users").create({
         email: signupData.email,
         password: signupData.password,
@@ -120,7 +127,6 @@ export default function AuthPage() {
       // Login after successful signup
       await pb.collection("users").authWithPassword(signupData.email, signupData.password)
       
-      // FIX: Use getDashboardPath instead of hardcoded "/dashboard"
       const redirectTo = getDashboardPath(userType)
       router.replace(redirectTo)
     } catch (err: any) {

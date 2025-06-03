@@ -7,7 +7,7 @@ import { useForm, Control } from "react-hook-form"
 import { z } from "zod"
 import { format } from "date-fns"
 import { CalendarIcon, ChevronRight, Loader2, MapPin, Package, DollarSign, Info } from "lucide-react"
-import pb from "@/lib/pocketbase"
+import { getPocketBaseClient } from "@/lib/pocketbase-client"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -85,7 +85,8 @@ const formSchema = z.object({
 
 
 // Check is user is authenicated
-if (!pb.authStore.isValid) {
+const pb = getPocketBaseClient();
+if (!pb || !pb.authStore.isValid) {
   console.log("User is not authenticated");
   // Optionally redirect to login or show an error
 } else {
@@ -138,8 +139,15 @@ export default function NewLoadPage() {
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
+    setFormError(null);
 
     try {
+      const pb = getPocketBaseClient();
+      if (!pb) {
+        setFormError("Failed to connect to the database. Please try again.");
+        return;
+      }
+
       // Format the data according to PocketBase schema
       const formattedData = {
         reference_number: data.reference_number || generateReferenceNumber(),
@@ -151,34 +159,30 @@ export default function NewLoadPage() {
         pickup_time: data.pickupTime,
         delivery_date: data.deliveryDate.toISOString(),
         delivery_time: data.deliveryTime,
-        equipment_type: data.equipment_type,
-        status: "draft",
-        visibility: data.visibility,
-        distance: data.distance ? parseFloat(data.distance) : null,
-        isHazardous: data.isHazardous || false,
-        isExpedited: data.isExpedited || false,
-        completedAt: null, // Will be set when the load is completed
         cargo_description: data.cargo_description,
+        is_hazardous: data.isHazardous,
+        is_expedited: data.isExpedited,
         weight: data.weight ? parseFloat(data.weight) : null,
         length: data.length ? parseFloat(data.length) : null,
         width: data.width ? parseFloat(data.width) : null,
         height: data.height ? parseFloat(data.height) : null,
-        pieceCount: data.pieceCount ? parseInt(data.pieceCount) : null,
-        packagingType: data.packagingType || null,
-        specialRequirements: data.specialRequirements || null,
-        accessorialServices: data.accessorialServices || null,
-        temperatureMin: data.temperatureMin ? parseFloat(data.temperatureMin) : null,
-        temperatureMax: data.temperatureMax ? parseFloat(data.temperatureMax) : null,
+        equipment_type: data.equipment_type,
+        piece_count: data.pieceCount ? parseInt(data.pieceCount) : null,
+        packaging_type: data.packagingType,
+        temperature_min: data.temperatureMin ? parseFloat(data.temperatureMin) : null,
+        temperature_max: data.temperatureMax ? parseFloat(data.temperatureMax) : null,
+        distance: data.distance ? parseFloat(data.distance) : null,
+        special_requirements: data.specialRequirements,
+        accessorial_services: data.accessorialServices,
         company_name: data.companyName,
+        status: "active",
+        visibility: data.visibility,
       };
 
-      // Create the record in PocketBase
-      await pb.collection('loads').create(formattedData);
-      
-      // Redirect to loads page after successful submission
-      router.push("/dashboard/loads?success=true");
+      await pb.collection("loads").create(formattedData);
+      router.push("/carrier-dashboard/loads?success=true");
     } catch (error) {
-      console.error("Error submitting form:", error);
+      console.error("Error creating load:", error);
       setFormError("Failed to create load. Please try again.");
     } finally {
       setIsSubmitting(false);

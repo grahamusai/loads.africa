@@ -7,7 +7,7 @@ import { useForm, Control } from "react-hook-form"
 import { z } from "zod"
 import { format } from "date-fns"
 import { CalendarIcon, ChevronRight, Loader2, MapPin, Package, DollarSign, Info } from "lucide-react"
-import pb from "@/lib/pocketbase"
+import getPocketBaseClient from "@/lib/pocketbase-client"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -84,8 +84,11 @@ const formSchema = z.object({
 })
 
 
-// Check is user is authenicated
-if (!pb.authStore.isValid) {
+// Initialize PocketBase client
+const pb = getPocketBaseClient();
+
+// Check is user is authenticated
+if (!pb || !pb.authStore.isValid) {
   console.log("User is not authenticated");
   // Optionally redirect to login or show an error
 } else {
@@ -173,6 +176,10 @@ export default function NewLoadPage() {
       };
 
       // Create the record in PocketBase
+      if (!pb) {
+        setFormError("Failed to connect to the database. Please try again.");
+        return;
+      }
       await pb.collection('loads').create(formattedData);
       
       // Redirect to loads page after successful submission

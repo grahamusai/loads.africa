@@ -1,5 +1,4 @@
 "use client";
-import pb from "../../../../lib/pocketbase";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -8,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { format } from "date-fns";
 import { CalendarIcon, Loader2 } from "lucide-react";
+import { getPocketBaseClient } from "@/lib/pocketbase-client";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -99,6 +99,12 @@ export default function NewDriverPage() {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
+      const pb = getPocketBaseClient();
+      if (!pb) {
+        console.error("PocketBase client not initialized");
+        return;
+      }
+
       const formData = new FormData();
   
       // Add all fields to FormData

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import pb from "@/lib/pocketbase"
+import getPocketBaseClient from "@/lib/pocketbase-client"
 import useSWR from "swr"
 import { useRouter } from "next/navigation"
 import { Calendar, Clock, CirclePlus, MapPin, Package, Search, Truck, TruckIcon, Weight, ArrowRight } from "lucide-react"
@@ -15,6 +15,10 @@ import Link from "next/link"
 
 // Define fetcher function to fetch loads from PocketBase
 const fetcher = async () => {
+  const pb = getPocketBaseClient();
+  if (!pb) {
+    throw new Error("PocketBase client not initialized");
+  }
   const records = await pb.collection('loads').getList(1, 50, {
     sort: '-created',
   })

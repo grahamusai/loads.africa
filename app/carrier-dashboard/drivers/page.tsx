@@ -27,7 +27,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
 import Image from "next/image";
-import pb from "@/lib/pocketbase";
+import { getPocketBaseClient } from "@/lib/pocketbase-client";
 import { useForm } from "react-hook-form";
 import {
   Dialog,
@@ -138,6 +138,12 @@ export default function DriversPage() {
   };
 
   const onSubmit = async (data: EditDriverForm) => {
+    const pb = getPocketBaseClient();
+    if (!pb) {
+      console.error("PocketBase client not initialized");
+      return;
+    }
+
     try {
       if (selectedDriver) {
         await pb.collection("drivers").update(selectedDriver.id, data);
@@ -154,6 +160,12 @@ export default function DriversPage() {
 
   useEffect(() => {
     async function fetchDrivers() {
+      const pb = getPocketBaseClient();
+      if (!pb) {
+        console.error("PocketBase client not initialized");
+        return;
+      }
+
       try {
         const records = await pb.collection("drivers").getFullList<Driver>({
           sort: "-created",
