@@ -124,9 +124,21 @@ export default function AuthPage() {
         user_type: userType,
       })
       
-      // Login after successful signup
-      await pb.collection("users").authWithPassword(signupData.email, signupData.password)
+      // Login after successful signup      await pb.collection("users").authWithPassword(signupData.email, signupData.password)
       
+      // Send welcome email
+      await fetch('/api/send-welcome', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: signupData.email,
+          firstName: signupData.firstName,
+          userType: userType,
+        }),
+      })
+
       const redirectTo = getDashboardPath(userType)
       router.replace(redirectTo)
     } catch (err: any) {
