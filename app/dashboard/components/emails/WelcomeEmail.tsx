@@ -42,7 +42,7 @@ export const WelcomeEmail = ({ name }: WelcomeEmailProps) => (
         </Text>
         <Text style={paragraph}>
           Best regards,<br />
-          The PostLoads Team
+          The Loads Africa Team
         </Text>
       </Container>
     </Body>

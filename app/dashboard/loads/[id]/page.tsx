@@ -1,3 +1,4 @@
+'use client'
 import Link from "next/link"
 import {
   AlertTriangle,
@@ -16,8 +17,9 @@ import {
   Truck,
 } from "lucide-react"
 import PocketBase from 'pocketbase'
-import { useState, use } from "react"
+import { useState, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -72,6 +74,7 @@ const getLoadDetails = async (id: string): Promise<Load> => {
       accessorialServices: record.accessorialServices,
       notes: record.notes,
       trackingEvents: record.expand?.trackingEvents || [],
+      documents: record.documents || [],
     };
     
     return load;
@@ -125,6 +128,7 @@ export interface Load {
   accessorialServices?: string;
   notes?: string;
   trackingEvents?: TrackingEvent[];
+  documents?: string[];
 }
 
 export default async function LoadDetailsPage({ params }: PageParams) {
@@ -205,14 +209,7 @@ export default async function LoadDetailsPage({ params }: PageParams) {
           <p className="text-muted-foreground">Created on {formatDate(load.created)}</p>
         </div>
         <div className="ml-auto flex gap-2">
-          <Button variant="outline" size="sm">
-            <Printer className="mr-2 h-4 w-4" />
-            Print
-          </Button>
-          <Button variant="outline" size="sm">
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
+         
           <Button variant="outline" size="sm">
             <Share2 className="mr-2 h-4 w-4" />
             Share
@@ -403,12 +400,7 @@ export default async function LoadDetailsPage({ params }: PageParams) {
                 </div>
               </div>
 
-              <div className="pt-2">
-                <Button className="w-full">
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Update Status
-                </Button>
-              </div>
+              
             </CardContent>
           </Card>
         </div>
@@ -420,7 +412,7 @@ export default async function LoadDetailsPage({ params }: PageParams) {
             <CardDescription>Real-time tracking updates for this load</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="timeline">
+            <Tabs defaultValue="documents">
               <TabsList className="mb-4">
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
                 <TabsTrigger value="map">Map View</TabsTrigger>
@@ -490,47 +482,52 @@ export default async function LoadDetailsPage({ params }: PageParams) {
 
               <TabsContent value="documents">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-md">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5" />
-                      <div>
-                        <div className="font-medium">Bill of Lading</div>
-                        <div className="text-sm text-muted-foreground">PDF, 245 KB</div>
+                  {load.documents && load.documents.length > 0 ? (
+                    load.documents.map((doc, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-md">
+                        <div className="flex items-center gap-3">
+                          <FileText className="h-5 w-5" />
+                          <div>
+                            <div className="font-medium">{doc}</div>
+                            <div className="text-sm text-muted-foreground">Document</div>
+                          </div>
+                        </div>                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(
+                                `${process.env.NEXT_PUBLIC_POCKETBASE_URL}/api/files/loads/${load.id}/${doc}`
+                              );
+                              if (!response.ok) throw new Error('Download failed');
+                              
+                              const blob = await response.blob();
+                              const url = window.URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = doc;
+                              document.body.appendChild(a);
+                              a.click();
+                              window.URL.revokeObjectURL(url);
+                              document.body.removeChild(a);
+                              
+                              toast.success('Document downloaded successfully');
+                            } catch (error) {
+                              console.error('Download error:', error);
+                              toast.error('Failed to download document');
+                            }
+                          }}
+                        >
+                          <Download className="h-4 w-4" />
+                          <span className="sr-only">Download {doc}</span>
+                        </Button>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-muted-foreground">
+                      No documents available for this load
                     </div>
-                    <Button variant="outline" size="sm">
-                      <Download className="h-4 w-4" />
-                      <span className="sr-only">Download</span>
-                    </Button>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-md">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5" />
-                      <div>
-                        <div className="font-medium">Commercial Invoice</div>
-                        <div className="text-sm text-muted-foreground">PDF, 198 KB</div>
-                      </div>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      <Download className="h-4 w-4" />
-                      <span className="sr-only">Download</span>
-                    </Button>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-md">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5" />
-                      <div>
-                        <div className="font-medium">Customs Declaration</div>
-                        <div className="text-sm text-muted-foreground">PDF, 312 KB</div>
-                      </div>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      <Download className="h-4 w-4" />
-                      <span className="sr-only">Download</span>
-                    </Button>
-                  </div>
+                  )}
                 </div>
               </TabsContent>
             </Tabs>
