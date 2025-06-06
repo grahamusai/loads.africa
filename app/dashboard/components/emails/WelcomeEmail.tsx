@@ -29,16 +29,25 @@ export const WelcomeEmail = ({ name }: WelcomeEmailProps) => (
         <Hr style={hr} />
         <Section>
           <Text style={paragraph}>
-            To get started, you can:
+            To get started, please reply to this email with the following required documents:
           </Text>
           <ul>
-            <li style={listItem}>Complete your profile</li>
-            <li style={listItem}>Browse available loads</li>
-            <li style={listItem}>Set up your trucks and drivers</li>
+            <li style={listItem}>Company Registration Documents (Business Registration/Certificate)</li>
+            <li style={listItem}>Tax Registration Certificate</li>
+            <li style={listItem}>For each truck: Registration documents, insurance certificates, and roadworthy certificates</li>
+            <li style={listItem}>For each driver: Valid driver's license, professional driving permit, and ID document</li>
           </ul>
         </Section>
         <Text style={paragraph}>
-          If you have any questions, our support team is here to help you. Just reply to this email.
+          Once we receive and verify your documents, you can:
+        </Text>
+        <ul>
+          <li style={listItem}>Complete your profile</li>
+          <li style={listItem}>Browse available loads</li>
+          <li style={listItem}>Set up your trucks and drivers</li>
+        </ul>
+        <Text style={paragraph}>
+          If you have any questions about the required documentation or need assistance, our support team is here to help you. Just reply to this email.
         </Text>
         <Text style={paragraph}>
           Best regards,<br />
